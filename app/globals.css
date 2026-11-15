@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+:root {
+  /* Colors */
+  --bg-base: #080808;
+  --bg-surface-1: #101010;
+  --bg-surface-2: #161616;
+  --bg-surface-3: #202020;
+  --bg-surface-hover: #262626;
+
+  /* Accent */
+  --accent: #e8ff47;
+  --accent-foreground: #080808;
+  --accent-muted: rgba(232, 255, 71, 0.15);
+
+  /* Text & Foreground */
+  --text-primary: #f5f5f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.15);
+  --border-focus: #e8ff47;
+
+  /* Glass tokens (solid fallback + backdrop blur) */
+  --glass-bg: rgba(22, 22, 22, 0.7);
+  --glass-bg-fallback: #161616;
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-blur: blur(16px);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Spacing & Touch targets */
+  --touch-target-min: 48px;
+}
+
+@theme {
+  --color-bg-base: var(--bg-base);
+  --color-surface-1: var(--bg-surface-1);
+  --color-surface-2: var(--bg-surface-2);
+  --color-surface-3: var(--bg-surface-3);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-foreground);
+  --color-accent-muted: var(--accent-muted);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-medium: var(--border-medium);
+  --font-display: var(--font-syne), sans-serif;
+  --font-body: var(--font-dm-sans), sans-serif;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-dm-sans), sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glass surface styling with solid fallback for devices without blur */
+.glass-panel {
+  background-color: var(--glass-bg-fallback);
+  border: 1px solid var(--glass-border);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .glass-panel {
+    background-color: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+  }
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Xlay",
+  "tagline": "Show Up.",
+  "conversationId": "34818d21-c9a5-4958-9d05-65b8dfe6c588",
+  "projectRoot": "C:\\Users\\ADMIN\\.gemini\\antigravity\\scratch\\xlay",
+  "productionDomain": "xlay.me",
+  "supabaseProject": {
+    "id": "xiadouznnbpwrhfpqumh",
+    "name": "Xlay",
+    "region": "eu-west-1"
+  },
+  "created": "2026-11-15T01:43:00Z"
+}

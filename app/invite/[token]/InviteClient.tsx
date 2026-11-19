@@ -17,7 +17,6 @@ interface Props {
 
 export default function InviteClient({ invite, token, currentProfile }: Props) {
   const supabase = createClient()
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [done, setDone] = useState<'accepted' | 'declined' | null>(null)
   const [error, setError] = useState('')

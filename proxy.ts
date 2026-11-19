@@ -1,8 +1,8 @@
-// middleware.ts - Supabase session refresh + route protection
+// proxy.ts - Supabase session refresh + route protection
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

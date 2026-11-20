@@ -96,12 +96,17 @@ export async function exchangeCode(params: {
   return { accessToken: data.access_token }
 }
 
-/** Fetch user info from Snap Kit API */
+/** Fetch user info from Snap Kit API (GraphQL) */
 export async function fetchSnapUser(accessToken: string): Promise<SnapUser> {
   const res = await fetch(SNAP_ME_URL, {
+    method: 'POST',
     headers: {
+      'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
     },
+    body: JSON.stringify({
+      query: '{me{displayName bitmoji{avatar} externalId}}',
+    }),
   })
 
   if (!res.ok) {
@@ -110,6 +115,11 @@ export async function fetchSnapUser(accessToken: string): Promise<SnapUser> {
   }
 
   const data = await res.json()
+
+  if (data.errors && data.errors.length > 0) {
+    throw new Error(`Snap GraphQL error: ${JSON.stringify(data.errors)}`)
+  }
+
   const me = data.data?.me
 
   if (!me) {

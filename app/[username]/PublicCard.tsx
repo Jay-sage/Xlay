@@ -1,7 +1,7 @@
 'use client'
 // app/[username]/PublicCard.tsx - Full-screen card with tap-to-enter
 import Avatar from '@/components/ui/Avatar'
-import { getLinkHostname } from '@/lib/url'
+import { getLinkHostname, normalizeUrlOrNull } from '@/lib/url'
 import { useEffect, useRef, useState } from 'react'
 
 const PLATFORM_ICONS: Record<string, string> = {
@@ -193,6 +193,9 @@ export default function PublicCard({ profile, links, friends, viewCount, refSour
         {links.length > 0 && (
           <div className="glass rounded-full px-6 py-3 flex gap-5 flex-wrap justify-center">
             {links.map(l => {
+              // Normalise on render too, so a link saved before the URL
+              // migration (bare "sage.com") still resolves to an absolute URL.
+              const href = normalizeUrlOrNull(l.url) ?? l.url
               // Custom links are identified by their hostname so the icon is
               // meaningful without a favicon service (no third-party requests).
               const hostname = getLinkHostname(l.url)
@@ -202,7 +205,7 @@ export default function PublicCard({ profile, links, friends, viewCount, refSour
               return (
                 <a
                   key={l.id}
-                  href={l.url}
+                  href={href}
                   target="_blank"
                   rel="noopener noreferrer nofollow ugc"
                   onClick={() => fetch('/api/links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'click', linkId: l.id, ref: refSource }) })}

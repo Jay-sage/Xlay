@@ -9,6 +9,26 @@ interface Props {
   searchParams: Promise<{ ref?: string }>
 }
 
+/** Generic metadata for unclaimed or private cards — no personal data leaks. */
+const PRIVATE_METADATA: Metadata = {
+  title: 'Xlay — Show Up.',
+  description: 'Xlay is the Snapchat-native link-in-bio for Nigerian creators, students and event-goers.',
+  robots: { index: false, follow: false },
+  alternates: { canonical: 'https://xlay.me' },
+  openGraph: {
+    title: 'Xlay — Show Up.',
+    description: 'Xlay is the Snapchat-native link-in-bio for Nigerian creators, students and event-goers.',
+    url: 'https://xlay.me',
+    siteName: 'Xlay',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Xlay — Show Up.',
+    description: 'Xlay is the Snapchat-native link-in-bio for Nigerian creators, students and event-goers.',
+  },
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params
   const supabase = await createServerClient()
@@ -18,24 +38,34 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq('username', username.toLowerCase())
     .single()
 
+  // Unclaimed username, or a private card — generic metadata, no personal data.
   if (!data || data.is_private) {
-    return { title: 'Xlay', robots: { index: false } }
+    return PRIVATE_METADATA
   }
 
+  const displayName = data.display_name
+  const title = `${displayName} (@${username}) on Xlay`
+  const description =
+    data.bio?.trim() || `${displayName} is on Xlay. Show up.`
+  const url = `https://xlay.me/${username}`
+
   return {
-    title: `${data.display_name} — Xlay`,
-    description: data.bio ?? `${data.display_name}'s Xlay card. Show Up.`,
+    title,
+    description,
+    alternates: { canonical: url },
+    robots: { index: true, follow: true },
     openGraph: {
-      title: `${data.display_name} (@${username})`,
-      description: data.bio ?? `Check out ${data.display_name}'s Xlay card.`,
-      images: data.avatar_url ? [{ url: data.avatar_url, width: 400, height: 400 }] : [],
-      url: `https://xlay.me/${username}`,
+      title,
+      description,
+      url,
+      siteName: 'Xlay',
       type: 'profile',
+      // The opengraph-image route for this segment provides the image.
     },
     twitter: {
-      card: 'summary',
-      title: `${data.display_name} — Xlay`,
-      description: data.bio ?? `Check out ${data.display_name}'s card at xlay.me/${username}`,
+      card: 'summary_large_image',
+      title,
+      description,
     },
   }
 }

@@ -223,4 +223,13 @@ describe('getLinkHostname', () => {
     assert.equal(getLinkHostname('not a url'), null)
     assert.equal(getLinkHostname(null), null)
   })
+
+  test('falls back to normalising a bare domain saved before the migration', () => {
+    assert.equal(getLinkHostname('Sage.com'), 'sage.com')
+    assert.equal(getLinkHostname('Sweaty.me'), 'sweaty.me')
+  })
+
+  test('returns null for a bare hostname with no dot', () => {
+    assert.equal(getLinkHostname('notadomain'), null)
+  })
 })

@@ -105,12 +105,17 @@ export function normalizeUrlOrNull(input: string | null | undefined): string | n
 /**
  * Extract a display hostname ("sage.com") from a stored link, for use as the
  * accessible name and tooltip on custom links.
+ *
+ * Handles links saved before the URL migration (bare "sage.com") by
+ * normalising first.
  */
 export function getLinkHostname(url: string | null | undefined): string | null {
   if (!url) return null
   try {
     return new URL(url).hostname.toLowerCase()
   } catch {
-    return null
+    // Stored without a scheme — fall back to the normalised hostname.
+    const normalised = normalizeUrl(url)
+    return normalised.ok ? normalised.hostname : null
   }
 }

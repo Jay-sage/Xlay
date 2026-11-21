@@ -1,17 +1,17 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
+import LandingShowcase from '@/components/marketing/LandingShowcase'
+import { BlurFade } from '@/components/ui/blur-fade'
+import { BorderBeam } from '@/components/ui/border-beam'
 import {
+  ArrowRight,
   BarChart3,
   Ghost,
   Link2,
-  Music,
   Moon,
-  Smartphone,
+  Music,
   Users,
-  Zap,
 } from 'lucide-react'
-
-import HeroCardPreview from '@/components/marketing/HeroCardPreview'
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Xlay — Show Up.',
@@ -31,33 +31,33 @@ export const metadata: Metadata = {
 const FEATURES = [
   {
     Icon: Ghost,
-    label: 'Bitmoji card',
-    desc: 'Your Snap avatar becomes the face of your page — no photo upload needed.',
+    label: 'Bitmoji front and centre',
+    desc: 'Your Snapchat avatar becomes the face of your page — unmodified and free for everyone.',
   },
   {
     Icon: Link2,
-    label: 'All your links',
-    desc: 'Instagram, TikTok, Spotify, your portfolio. One clean card.',
+    label: '47+ app & social icons',
+    desc: 'Instagram, TikTok, Audiomack, Spotify, WhatsApp, and custom links in one glass pill.',
   },
   {
     Icon: Music,
-    label: 'Your soundtrack',
-    desc: 'Pick a track and it plays the moment someone taps in.',
+    label: 'Apple Music soundtrack',
+    desc: 'Search any song and attach its 30-second preview. Plays the moment someone taps in.',
   },
   {
     Icon: Users,
-    label: 'Best Friends',
-    desc: 'Show your squad on your card — they opt in, you stay in control.',
+    label: 'Best Friends squad',
+    desc: 'Invite up to 3 Snap friends to appear on your card. They opt in and can leave anytime.',
   },
   {
     Icon: BarChart3,
-    label: 'Streak & score',
-    desc: 'Surface the stats you are proud of. Hide the ones you are not.',
+    label: 'Streak & Snap Score',
+    desc: 'Surface the stats you want to share and keep everything else private.',
   },
   {
     Icon: Moon,
-    label: 'Dark-first design',
-    desc: 'Built for how Nigerians actually use their phones, late at night.',
+    label: 'Built for dark mode & speed',
+    desc: 'Lightweight pages engineered for mid-range Android phones and Nigerian mobile data.',
   },
 ]
 
@@ -65,83 +65,109 @@ const STEPS = [
   {
     n: '01',
     title: 'Sign in with Snapchat',
-    desc: 'One tap. Your Bitmoji and name come across automatically.',
+    desc: 'One tap with Snap Login Kit. Your display name and Bitmoji come across automatically.',
   },
   {
     n: '02',
-    title: 'Claim your username',
-    desc: 'Get xlay.me/you. Add your links, soundtrack and best friends.',
+    title: 'Claim xlay.me/you',
+    desc: 'Pick your handle, choose your 3D pose, set a theme, and add your links and soundtrack.',
   },
   {
     n: '03',
-    title: 'Share it everywhere',
-    desc: 'Drop it in your Snap bio, TikTok, WhatsApp. One link for everything.',
+    title: 'Show up everywhere',
+    desc: 'Drop your Xlay link in your Snap bio, TikTok, Instagram, and WhatsApp.',
   },
 ]
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Nav */}
-      <nav className="sticky top-0 z-40 border-b border-white/5 bg-[var(--bg-base)]/80 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="font-display text-lg font-black tracking-tight text-[var(--color-accent)]">
-            Xlay
+    <div className="min-h-screen flex flex-col bg-[#080808] text-[var(--color-text-primary)] overflow-x-hidden">
+      {/* Floating rounded pill navbar */}
+      <header className="sticky top-4 z-40 px-4">
+        <nav className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-white/10 bg-[#0d0d10]/85 px-4 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl sm:px-6">
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-display text-base font-black tracking-tight text-white"
+          >
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-accent)] text-black">
+              <Ghost size={15} aria-hidden="true" />
+            </span>
+            <span>Xlay</span>
           </Link>
+
+          <div className="hidden items-center gap-6 text-xs font-medium text-white/70 md:flex">
+            <a href="#how-it-works" className="transition-colors hover:text-white">
+              How it works
+            </a>
+            <a href="#features" className="transition-colors hover:text-white">
+              Features
+            </a>
+            <Link href="/contact" className="transition-colors hover:text-white">
+              Contact
+            </Link>
+          </div>
+
           <div className="flex items-center gap-2">
             <Link
               href="/login"
-              className="rounded-full px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition-colors hover:bg-white/5"
+              className="rounded-full px-3.5 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:text-white sm:text-sm"
             >
-              Sign in
+              Login
             </Link>
             <Link
               href="/login"
-              className="btn-primary rounded-full px-4 py-2 text-sm font-semibold"
+              className="rounded-full border border-[var(--color-accent)]/50 bg-[var(--color-accent)]/15 px-4 py-1.5 text-xs font-semibold text-[var(--color-accent)] shadow-[0_0_24px_rgba(232,255,71,0.18)] transition-all hover:bg-[var(--color-accent)] hover:text-black sm:px-5 sm:py-2 sm:text-sm"
             >
-              Get your card
+              Sign Up Free
             </Link>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
-      {/* Hero — two columns: copy left, live preview right */}
-      <section className="relative overflow-hidden border-b border-white/5">
-        {/* Ambient background wash */}
+      {/* Centered Hero */}
+      <section className="relative pt-16 pb-8 sm:pt-24">
+        {/* Soft radial top wash */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute right-[-10%] top-[-15%] h-[420px] w-[420px] rounded-full opacity-[0.07] blur-[110px]"
+          className="pointer-events-none absolute left-1/2 top-0 h-[360px] w-[640px] -translate-x-1/2 rounded-full opacity-[0.09] blur-[120px]"
           style={{ background: 'var(--color-accent)' }}
         />
 
-        <div className="relative mx-auto grid w-full max-w-6xl items-center gap-14 px-6 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:py-28">
-          {/* Copy */}
-          <div className="max-w-xl">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]" aria-hidden="true" />
-              Built for Snapchat
-            </span>
-
-            <h1 className="mt-6 font-display text-6xl font-black leading-[0.95] tracking-tight text-[var(--color-text-primary)] sm:text-7xl">
-              Show Up.
+        <div className="relative mx-auto flex max-w-3xl flex-col items-center px-6 text-center">
+          <BlurFade delay={0.04}>
+            <h1 className="font-display text-4xl font-extrabold tracking-tight text-white sm:text-6xl sm:leading-[1.06]">
+              Show Up, right here.
             </h1>
-
-            <p className="mt-6 text-lg leading-relaxed text-[var(--color-text-secondary)]">
-              One link for everything you are. Sign in with Snapchat and your Bitmoji
-              becomes the face of your page at{' '}
-              <span className="font-semibold text-[var(--color-text-primary)]">
-                xlay.me/you
-              </span>
-              .
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-white/65 sm:text-base">
+              Xlay is your Snapchat-native link-in-bio for Nigerian creators, students, and
+              event-goers — your Bitmoji, links, soundtrack, and best friends on one card.
             </p>
+          </BlurFade>
 
-            {/* Username claim */}
+          {/* Dual glowing pill CTAs */}
+          <BlurFade delay={0.12} className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/login"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-[var(--color-accent)]/60 bg-[var(--color-accent)] px-7 text-sm font-semibold text-black shadow-[0_0_32px_rgba(232,255,71,0.28)] transition-all hover:opacity-90 active:scale-[0.98]"
+            >
+              Sign Up for Free
+            </Link>
+            <a
+              href="#how-it-works"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-7 text-sm font-semibold text-white/90 transition-colors hover:border-white/20 hover:bg-white/[0.08]"
+            >
+              See how it works
+            </a>
+          </BlurFade>
+
+          {/* Username claim pill */}
+          <BlurFade delay={0.18} className="mt-6 w-full max-w-sm">
             <form
               action="/login"
               method="get"
-              className="mt-8 flex max-w-sm items-center gap-0 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] focus-within:border-[var(--color-accent)]/50"
+              className="flex items-center rounded-full border border-white/10 bg-white/[0.03] p-1.5 pl-4 transition-colors focus-within:border-[var(--color-accent)]/50"
             >
-              <span className="pl-4 text-sm whitespace-nowrap text-[var(--color-text-secondary)]">
+              <span className="whitespace-nowrap text-xs font-medium text-white/45 sm:text-sm">
                 xlay.me/
               </span>
               <input
@@ -149,133 +175,128 @@ export default function Home() {
                 name="claim"
                 placeholder="yourname"
                 maxLength={20}
-                aria-label="Your Xlay username"
-                className="flex-1 bg-transparent py-4 pr-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none"
+                aria-label="Claim your username"
+                className="min-w-0 flex-1 bg-transparent py-2 pr-2 text-xs text-white placeholder:text-white/30 focus:outline-none sm:text-sm"
               />
               <button
                 type="submit"
-                className="btn-primary m-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap"
+                className="inline-flex items-center gap-1 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--color-accent)] hover:text-black cursor-pointer"
               >
-                Claim it →
+                Claim
+                <ArrowRight size={13} aria-hidden="true" />
               </button>
             </form>
-
-            <p className="mt-4 text-xs text-[var(--color-text-muted)]">
-              Free to start. No credit card.
+            <p className="mt-2.5 text-[11px] text-white/40">
+              Free forever. No credit card. No ad trackers.
             </p>
-          </div>
-
-          {/* Preview */}
-          <div className="lg:pl-8">
-            <HeroCardPreview />
-          </div>
+          </BlurFade>
         </div>
+
+        {/* Signature tilted Dashboard + Fanned Cards Showcase */}
+        <BlurFade delay={0.24}>
+          <LandingShowcase />
+        </BlurFade>
       </section>
 
       {/* How it works */}
-      <section className="border-b border-white/5 px-6 py-20">
-        <div className="mx-auto w-full max-w-6xl">
-          <div className="max-w-2xl">
-            <h2 className="font-display text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">
-              Live in three steps
-            </h2>
-            <p className="mt-3 text-[var(--color-text-secondary)]">
-              No forms to fill in twice. Your Snapchat account does most of the work.
-            </p>
-          </div>
-
-          <ol className="mt-12 grid gap-8 sm:grid-cols-3">
-            {STEPS.map(s => (
-              <li key={s.n} className="relative">
-                {/* Connector line between steps on desktop */}
-                <span
-                  aria-hidden="true"
-                  className="absolute left-0 top-2 hidden h-px w-full bg-gradient-to-r from-white/15 to-transparent sm:block"
-                />
-                <p className="font-display relative text-sm font-bold text-[var(--color-accent)]">
-                  {s.n}
-                </p>
-                <h3 className="mt-3 text-lg font-semibold text-[var(--color-text-primary)]">
-                  {s.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-secondary)]">
-                  {s.desc}
-                </p>
-              </li>
-            ))}
-          </ol>
+      <section id="how-it-works" className="mx-auto w-full max-w-5xl px-6 py-20">
+        <div className="mb-10 text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)]">
+            How it works
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+            Live in under a minute.
+          </h2>
         </div>
+
+        <ol className="grid gap-4 sm:grid-cols-3">
+          {STEPS.map((s) => (
+            <li
+              key={s.n}
+              className="rounded-2xl border border-white/[0.08] bg-[#101010] p-6 space-y-3"
+            >
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/10 font-display text-xs font-bold text-[var(--color-accent)]">
+                {s.n}
+              </span>
+              <h3 className="font-display text-base font-bold text-white">{s.title}</h3>
+              <p className="text-xs leading-relaxed text-white/60 sm:text-sm">{s.desc}</p>
+            </li>
+          ))}
+        </ol>
       </section>
 
       {/* Features */}
-      <section className="border-b border-white/5 px-6 py-20">
-        <div className="mx-auto w-full max-w-6xl">
-          <div className="max-w-2xl">
-            <h2 className="font-display text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">
-              Everything on one card
-            </h2>
-            <p className="mt-3 text-[var(--color-text-secondary)]">
-              The things you keep typing into your bio, gathered in one place.
-            </p>
-          </div>
+      <section id="features" className="mx-auto w-full max-w-5xl px-6 py-16">
+        <div className="mb-10 text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)]">
+            Features
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+            Everything on one card.
+          </h2>
+        </div>
 
-          {/* Asymmetric grid — the first and last tiles span two columns so the
-              four-column grid fills evenly with no orphan. */}
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.map((f, i) => {
-              const wide = i === 0 || i === FEATURES.length - 1
-              return (
-                <div
-                  key={f.label}
-                  className={`group glass rounded-2xl p-6 transition-colors hover:border-[var(--color-accent)]/30 ${
-                    wide ? 'lg:col-span-2' : ''
-                  }`}
-                >
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-                    <f.Icon size={19} strokeWidth={2} aria-hidden="true" />
-                  </span>
-                  <h3 className="mt-4 font-semibold text-[var(--color-text-primary)]">
-                    {f.label}
-                  </h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-text-secondary)]">
-                    {f.desc}
-                  </p>
-                </div>
-              )
-            })}
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map(({ Icon, label, desc }) => (
+            <div
+              key={label}
+              className="rounded-2xl border border-white/[0.08] bg-[#101010] p-5 transition-colors hover:border-white/15"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-[var(--color-accent)]">
+                <Icon size={17} aria-hidden="true" />
+              </span>
+              <h3 className="mt-4 font-display text-sm font-bold text-white">{label}</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-white/60">{desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="px-6 py-24">
-        <div className="mx-auto w-full max-w-3xl text-center">
-          <Zap className="mx-auto text-[var(--color-accent)]" size={28} aria-hidden="true" />
-          <h2 className="mt-6 font-display text-4xl font-black tracking-tight text-[var(--color-text-primary)]">
+      {/* Final CTA */}
+      <section className="mx-auto w-full max-w-3xl px-6 py-20">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#101010] px-6 py-12 text-center sm:px-12">
+          <h2 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Ready to show up?
           </h2>
-          <p className="mt-3 text-[var(--color-text-secondary)]">
-            Free to start. Show up.
+          <p className="mx-auto mt-3 max-w-md text-sm text-white/60">
+            Claim your handle with Snapchat and build your card for free.
           </p>
-          <Link
-            href="/login"
-            className="btn-primary mt-8 inline-flex items-center gap-2 rounded-xl px-8 py-4 font-semibold"
-          >
-            <Smartphone size={17} aria-hidden="true" />
-            Get your Xlay card
-          </Link>
+          <div className="mt-7 flex justify-center">
+            <Link
+              href="/login"
+              className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-8 text-sm font-semibold text-black shadow-[0_0_32px_rgba(232,255,71,0.22)] transition-opacity hover:opacity-90"
+            >
+              Get your Xlay card
+              <ArrowRight size={15} aria-hidden="true" />
+            </Link>
+          </div>
+          <BorderBeam
+            size={140}
+            duration={10}
+            colorFrom="#e8ff47"
+            colorTo="rgba(255,255,255,0.2)"
+            borderWidth={1}
+          />
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 px-6 py-8">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 text-xs text-[var(--color-text-secondary)] sm:flex-row">
-          <span className="font-display text-sm font-bold text-[var(--color-accent)]">Xlay</span>
-          <div className="flex gap-6">
-            <Link href="/privacy" className="transition-colors hover:text-[var(--color-text-primary)]">Privacy</Link>
-            <Link href="/terms" className="transition-colors hover:text-[var(--color-text-primary)]">Terms</Link>
-            <Link href="/data-deletion" className="transition-colors hover:text-[var(--color-text-primary)]">Data Deletion</Link>
-            <Link href="/contact" className="transition-colors hover:text-[var(--color-text-primary)]">Contact</Link>
+      <footer className="mt-auto border-t border-white/[0.06] px-6 py-8">
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-between gap-4 text-xs text-white/45 sm:flex-row">
+          <span className="font-display text-sm font-black text-[var(--color-accent)]">Xlay</span>
+          <div className="flex flex-wrap justify-center gap-6">
+            <Link href="/privacy" className="transition-colors hover:text-white">
+              Privacy
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-white">
+              Terms
+            </Link>
+            <Link href="/data-deletion" className="transition-colors hover:text-white">
+              Data Deletion
+            </Link>
+            <Link href="/contact" className="transition-colors hover:text-white">
+              Contact
+            </Link>
           </div>
           <span>© {new Date().getFullYear()} Xlay</span>
         </div>

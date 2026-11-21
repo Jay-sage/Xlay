@@ -1,165 +1,376 @@
 'use client'
-import { validateUsername, USERNAME_ERROR_MESSAGES } from '@/lib/username'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
 
-export default function OnboardingPage() {
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { createClient } from '@/lib/supabase/client'
+import { USERNAME_ERROR_MESSAGES, validateUsername } from '@/lib/username'
+import { ArrowRight, Check, Loader2, Mail, ShieldCheck, X } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useState, useTransition } from 'react'
+
+function OnboardingContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  const initialClaim =
+    searchParams.get('claim')?.trim().replace(/[^a-zA-Z0-9_]/g, '').slice(0, 20) ?? ''
+
   const [step, setStep] = useState<'username' | 'email'>('username')
-  const [username, setUsername] = useState('')
+  const [username, setUsername] = useState(initialClaim)
   const [usernameError, setUsernameError] = useState('')
   const [available, setAvailable] = useState<boolean | null>(null)
   const [checking, setChecking] = useState(false)
   const [email, setEmail] = useState('')
+  const [emailError, setEmailError] = useState('')
   const [isPending, startTransition] = useTransition()
 
-  async function checkAvailability(value: string) {
-    setAvailable(null)
-    const err = validateUsername(value)
+  // Live debounced availability check as the user types
+  useEffect(() => {
+    const trimmed = username.trim()
+    if (!trimmed) {
+      setAvailable(null)
+      setUsernameError('')
+      setChecking(false)
+      return
+    }
+
+    const err = validateUsername(trimmed)
+    if (err) {
+      setAvailable(null)
+      setUsernameError(USERNAME_ERROR_MESSAGES[err])
+      setChecking(false)
+      return
+    }
+
+    setUsernameError('')
+    setChecking(true)
+    let cancelled = false
+
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', trimmed.toLowerCase())
+        .maybeSingle()
+
+      if (cancelled) return
+      setChecking(false)
+      setAvailable(data === null)
+    }, 300)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [username, supabase])
+
+  function handleClaimUsername(e: React.FormEvent) {
+    e.preventDefault()
+    const trimmed = username.trim()
+    const err = validateUsername(trimmed)
     if (err) {
       setUsernameError(USERNAME_ERROR_MESSAGES[err])
       return
     }
-    setUsernameError('')
-    setChecking(true)
-    const { data } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('username', value.toLowerCase())
-      .maybeSingle()
-    setChecking(false)
-    setAvailable(data === null)
-  }
-
-  function handleUsernameChange(v: string) {
-    setUsername(v)
-    setAvailable(null)
-    setUsernameError('')
-  }
-
-  async function handleClaimUsername() {
-    const err = validateUsername(username)
-    if (err) { setUsernameError(USERNAME_ERROR_MESSAGES[err]); return }
-    if (!available) { setUsernameError('That username is taken.'); return }
+    if (!available) {
+      setUsernameError('That username is already taken.')
+      return
+    }
 
     startTransition(async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
       const { error } = await supabase
         .from('profiles')
-        .update({ username: username.toLowerCase() })
+        .update({ username: trimmed.toLowerCase() })
         .eq('id', user.id)
 
       if (error) {
-        setUsernameError(error.message.includes('reserved') ? 'That username is reserved.' : 'Could not save username. Try another.')
+        setUsernameError(
+          error.message.includes('reserved')
+            ? 'That username is reserved.'
+            : 'Could not save username. Try another.'
+        )
       } else {
         setStep('email')
       }
     })
   }
 
-  async function handleSaveEmail() {
+  function handleSaveEmail(e: React.FormEvent) {
+    e.preventDefault()
+    setEmailError('')
+
     startTransition(async () => {
       if (email.trim()) {
-        await supabase.auth.updateUser({ email })
+        const { error } = await supabase.auth.updateUser({ email: email.trim() })
+        if (error) {
+          setEmailError('Enter a valid email address or skip for now.')
+          return
+        }
       }
       router.push('/dashboard')
     })
   }
 
-  if (step === 'email') {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="glass max-w-sm w-full p-8 rounded-2xl space-y-6">
-          <div className="text-center space-y-1">
-            <div className="text-3xl">📬</div>
-            <h1 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">
-              Add your email?
-            </h1>
-            <p className="text-[var(--color-text-secondary)] text-sm">
-              Optional. For account recovery only — no spam.
-            </p>
-          </div>
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="you@email.com"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-accent)]/50"
-          />
-          <button
-            onClick={handleSaveEmail}
-            disabled={isPending}
-            className="btn-primary w-full py-3 rounded-xl text-sm font-semibold disabled:opacity-50"
-          >
-            {isPending ? 'Saving…' : 'Continue'}
-          </button>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="block w-full text-center text-xs text-[var(--color-text-secondary)] underline"
-          >
-            Skip for now
-          </button>
-        </div>
-      </main>
-    )
-  }
+  const displayHandle = username.trim().toLowerCase() || 'yourname'
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="glass max-w-sm w-full p-8 rounded-2xl space-y-6">
-        <div className="text-center space-y-1">
-          <span className="font-display text-2xl font-black text-[var(--color-accent)]">Xlay</span>
-          <h1 className="font-display text-xl font-bold text-[var(--color-text-primary)]">
-            Claim your username
-          </h1>
-          <p className="text-[var(--color-text-secondary)] text-sm">
-            Your card will live at <strong>xlay.me/username</strong>
-          </p>
-        </div>
+    <div className="min-h-screen flex flex-col bg-[var(--bg-base)]">
+      {/* Top bar with step indicator */}
+      <header className="border-b border-white/[0.06]">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-4">
+          <Link
+            href="/"
+            className="font-display text-lg font-black tracking-tight text-[var(--color-accent)]"
+          >
+            Xlay
+          </Link>
 
-        <div className="space-y-2">
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] text-sm">
-              xlay.me/
+          {/* 2-step indicator */}
+          <div className="flex items-center gap-2 text-xs font-medium">
+            <span
+              className={`rounded-full px-2.5 py-1 ${
+                step === 'username'
+                  ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+                  : 'text-[var(--color-text-muted)]'
+              }`}
+            >
+              01 Handle
             </span>
-            <input
-              type="text"
-              value={username}
-              onChange={e => handleUsernameChange(e.target.value)}
-              onBlur={() => username && checkAvailability(username)}
-              placeholder="yourname"
-              maxLength={20}
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-[72px] pr-10 py-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-accent)]/50"
-            />
-            {/* Availability indicator */}
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm">
-              {checking ? '…' : available === true ? '✓' : available === false ? '✗' : ''}
+            <span className="h-px w-4 bg-white/15" aria-hidden="true" />
+            <span
+              className={`rounded-full px-2.5 py-1 ${
+                step === 'email'
+                  ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+                  : 'text-[var(--color-text-muted)]'
+              }`}
+            >
+              02 Recovery
             </span>
           </div>
+        </div>
+      </header>
 
-          {usernameError && (
-            <p className="text-red-400 text-xs">{usernameError}</p>
-          )}
-          {available === false && !usernameError && (
-            <p className="text-red-400 text-xs">That username is taken.</p>
-          )}
-          {available === true && (
-            <p className="text-green-400 text-xs">Available!</p>
+      {/* Main step card */}
+      <main className="flex flex-1 items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
+          {step === 'username' ? (
+            <form
+              onSubmit={handleClaimUsername}
+              className="rounded-2xl border border-white/[0.08] bg-[var(--bg-surface-1)] p-6 sm:p-8"
+            >
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)]">
+                  Step 1 of 2
+                </p>
+                <h1 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
+                  Claim your handle
+                </h1>
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  Pick the link you will drop in your Snap bio, TikTok, and WhatsApp.
+                </p>
+              </div>
+
+              {/* Live URL preview */}
+              <div className="mt-6 flex items-center justify-between rounded-xl border border-white/[0.06] bg-[var(--bg-base)] px-4 py-3">
+                <span className="truncate text-sm">
+                  <span className="text-[var(--color-text-muted)]">xlay.me/</span>
+                  <span className="font-semibold text-[var(--color-text-primary)]">
+                    {displayHandle}
+                  </span>
+                </span>
+                <span className="ml-3 flex-shrink-0 text-xs font-medium">
+                  {checking ? (
+                    <span className="inline-flex items-center gap-1 text-[var(--color-text-muted)]">
+                      <Loader2 size={13} className="animate-spin" aria-hidden="true" />
+                      Checking
+                    </span>
+                  ) : available === true ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-400">
+                      <Check size={13} aria-hidden="true" />
+                      Available
+                    </span>
+                  ) : available === false ? (
+                    <span className="inline-flex items-center gap-1 text-red-400">
+                      <X size={13} aria-hidden="true" />
+                      Taken
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+
+              {/* Input */}
+              <div className="mt-4 space-y-2">
+                <label
+                  htmlFor="username-input"
+                  className="block text-xs font-medium text-[var(--color-text-secondary)]"
+                >
+                  Username
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-muted)]">
+                    @
+                  </span>
+                  <Input
+                    id="username-input"
+                    type="text"
+                    autoFocus
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="yourname"
+                    maxLength={20}
+                    className="pl-9 pr-10"
+                  />
+                  <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2">
+                    {checking ? (
+                      <Loader2
+                        size={16}
+                        className="animate-spin text-[var(--color-text-muted)]"
+                        aria-hidden="true"
+                      />
+                    ) : available === true ? (
+                      <Check size={16} className="text-emerald-400" aria-hidden="true" />
+                    ) : available === false || usernameError ? (
+                      <X size={16} className="text-red-400" aria-hidden="true" />
+                    ) : null}
+                  </span>
+                </div>
+
+                {usernameError ? (
+                  <p className="text-xs text-red-400">{usernameError}</p>
+                ) : available === false ? (
+                  <p className="text-xs text-red-400">That username is taken. Try another.</p>
+                ) : (
+                  <p className="text-xs text-[var(--color-text-muted)]">
+                    3–20 characters · letters, numbers, and underscores only.
+                  </p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isPending || checking || !available}
+                className="mt-6 w-full"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                    Claiming…
+                  </>
+                ) : (
+                  <>
+                    Claim xlay.me/{displayHandle}
+                    <ArrowRight size={16} aria-hidden="true" />
+                  </>
+                )}
+              </Button>
+            </form>
+          ) : (
+            <form
+              onSubmit={handleSaveEmail}
+              className="rounded-2xl border border-white/[0.08] bg-[var(--bg-surface-1)] p-6 sm:p-8"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-[var(--color-accent)]">
+                <Mail size={20} aria-hidden="true" />
+              </div>
+
+              <div className="mt-5 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)]">
+                  Step 2 of 2 · Optional
+                </p>
+                <h1 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
+                  Add a recovery email
+                </h1>
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  Only used if you ever need help recovering{' '}
+                  <span className="font-medium text-[var(--color-text-primary)]">
+                    xlay.me/{displayHandle}
+                  </span>
+                  . Never sold, no newsletters.
+                </p>
+              </div>
+
+              <div className="mt-6 space-y-2">
+                <label
+                  htmlFor="email-input"
+                  className="block text-xs font-medium text-[var(--color-text-secondary)]"
+                >
+                  Email address
+                </label>
+                <Input
+                  id="email-input"
+                  type="email"
+                  autoFocus
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    setEmailError('')
+                  }}
+                  placeholder="you@example.com"
+                />
+                {emailError && <p className="text-xs text-red-400">{emailError}</p>}
+              </div>
+
+              <div className="mt-6 flex flex-col gap-2.5">
+                <Button type="submit" size="lg" disabled={isPending} className="w-full">
+                  {isPending ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                      Saving…
+                    </>
+                  ) : (
+                    <>
+                      Finish setup
+                      <ArrowRight size={16} aria-hidden="true" />
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="md"
+                  onClick={() => router.push('/dashboard')}
+                  className="w-full"
+                >
+                  Skip for now
+                </Button>
+              </div>
+
+              <div className="mt-5 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+                <ShieldCheck size={14} aria-hidden="true" />
+                <span>You can add or remove your email anytime in Settings.</span>
+              </div>
+            </form>
           )}
         </div>
+      </main>
+    </div>
+  )
+}
 
-        <button
-          onClick={handleClaimUsername}
-          disabled={isPending || !available}
-          className="btn-primary w-full py-3 rounded-xl text-sm font-semibold disabled:opacity-50"
-        >
-          {isPending ? 'Claiming…' : 'Claim username'}
-        </button>
-      </div>
-    </main>
+export default function OnboardingPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
+          <Loader2 size={20} className="animate-spin text-[var(--color-accent)]" />
+        </main>
+      }
+    >
+      <OnboardingContent />
+    </Suspense>
   )
 }

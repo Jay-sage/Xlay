@@ -126,11 +126,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const savedClaim = cookieStore.get('snap_claim_username')?.value
+    const savedNext = cookieStore.get('snap_oauth_next')?.value
+
+    const onboardingTarget = savedClaim
+      ? `${BASE_URL}/onboarding?claim=${encodeURIComponent(savedClaim)}`
+      : `${BASE_URL}/onboarding`
+
+    const destination = isNewUser
+      ? onboardingTarget
+      : savedNext && savedNext.startsWith('/') && !savedNext.startsWith('//')
+        ? `${BASE_URL}${savedNext}`
+        : `${BASE_URL}/dashboard`
+
     // 5. Create a Supabase session via magic link (server-side session)
     const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
       type: 'magiclink',
       email: `snap_${snapUser.externalId}@snap.xlay.me`,
-      options: { redirectTo: isNewUser ? `${BASE_URL}/onboarding` : `${BASE_URL}/dashboard` },
+      options: { redirectTo: destination },
     })
 
     if (linkError || !linkData.properties?.hashed_token) {
@@ -139,9 +152,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 6. Exchange the OTP token for a session and set cookies
-    const response = NextResponse.redirect(
-      isNewUser ? `${BASE_URL}/onboarding` : `${BASE_URL}/dashboard`
-    )
+    const response = NextResponse.redirect(destination)
 
     // Set session via @supabase/ssr using the OTP token
     const supabase = createServerClient(
@@ -169,9 +180,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${BASE_URL}/auth/error?reason=session_failed`)
     }
 
-    // Clear PKCE cookies
+    // Clear PKCE & flow cookies
     response.cookies.delete('snap_oauth_state')
     response.cookies.delete('snap_code_verifier')
+    response.cookies.delete('snap_claim_username')
+    response.cookies.delete('snap_oauth_next')
 
     return response
   } catch (err) {

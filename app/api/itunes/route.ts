@@ -1,6 +1,20 @@
 // app/api/itunes/route.ts - Search iTunes / Apple Music preview clips
 import { NextRequest, NextResponse } from 'next/server'
 
+interface ITunesTrack {
+  trackId?: number
+  trackName?: string
+  artistName?: string
+  previewUrl?: string
+  artworkUrl100?: string
+  artworkUrl60?: string
+  trackViewUrl?: string
+}
+
+interface ITunesSearchResponse {
+  results?: ITunesTrack[]
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const term = searchParams.get('term')
@@ -19,9 +33,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ results: [] })
     }
 
-    const data = await res.json()
+    const data = (await res.json()) as ITunesSearchResponse
     // Map to clean format
-    const results = (data.results || []).map((item: any) => ({
+    const results = (data.results || []).map((item: ITunesTrack) => ({
       trackId: item.trackId,
       trackName: item.trackName,
       artistName: item.artistName,

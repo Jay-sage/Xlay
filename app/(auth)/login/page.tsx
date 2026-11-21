@@ -4,6 +4,7 @@ import { BlurFade } from '@/components/ui/blur-fade'
 import { BorderBeam } from '@/components/ui/border-beam'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { PlatformIcon } from '@/components/ui/PlatformIcon'
 import { ArrowLeft, Fingerprint, Ghost, ShieldCheck, User } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -94,9 +95,7 @@ export default async function LoginPage({ searchParams }: Props) {
                   className="min-h-[54px] w-full rounded-xl px-6 text-sm font-semibold shadow-lg shadow-primary/10"
                 >
                   <Link href={authHref}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <path d="M12.21 2C8.16 2 5.6 4.9 5.6 8.35c0 1.25.32 2.38.83 3.32.2.37.15.65-.12.87-.52.42-1.37.75-2.06 1.05-.33.15-.49.37-.47.69.04.48.51.78 1.05.78.36 0 .72-.07 1.05-.18.24-.08.45.02.57.24.32.58.74 1.15 1.29 1.63.15.13.2.29.17.48-.12.85-.75 1.48-1.55 1.7-.35.1-.47.34-.4.66.08.38.45.62.91.57.85-.09 1.69-.37 2.45-.84.22-.14.43-.09.61.08.79.76 1.76 1.28 2.87 1.51.35.07.69.1 1.04.1.35 0 .69-.03 1.04-.1 1.11-.23 2.08-.75 2.87-1.51.18-.17.39-.22.61-.08.76.47 1.6.75 2.45.84.46.05.83-.19.91-.57.07-.32-.05-.56-.4-.66-.8-.22-1.43-.85-1.55-1.7-.03-.19.02-.35.17-.48.55-.48.97-1.05 1.29-1.63.12-.22.33-.32.57-.24.33.11.69.18 1.05.18.54 0 1.01-.3 1.05-.78.02-.32-.14-.54-.47-.69-.69-.3-1.54-.63-2.06-1.05-.27-.22-.32-.5-.12-.87.51-.94.83-2.07.83-3.32C18.82 4.9 16.26 2 12.21 2z" />
-                    </svg>
+                    <PlatformIcon platform="snapchat" size={19} />
                     Continue with Snapchat
                   </Link>
                 </Button>

@@ -1,14 +1,22 @@
 'use client'
-// app/dashboard/links/page.tsx - Manage links
+// app/dashboard/links/page.tsx - Manage links with full 47-platform icon picker
+
 import { BlurFade } from '@/components/ui/blur-fade'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { PlatformIcon } from '@/components/ui/PlatformIcon'
 import { Switch } from '@/components/ui/switch'
+import {
+  detectPlatform,
+  getPlatformLabel,
+  PLATFORM_CATEGORIES,
+  PLATFORMS,
+  type PlatformCategory,
+} from '@/lib/platforms'
 import { createClient } from '@/lib/supabase/client'
 import { normalizeUrl } from '@/lib/url'
-import { ArrowDown, ArrowUp, Loader2, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Loader2, Plus, Search, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 
 type LinkRow = {
@@ -19,23 +27,14 @@ type LinkRow = {
   is_active: boolean
 }
 
-function detectPlatform(url: string): string {
-  if (!url) return 'custom'
-  if (url.includes('instagram.com')) return 'instagram'
-  if (url.includes('tiktok.com')) return 'tiktok'
-  if (url.includes('twitter.com') || url.includes('x.com')) return 'twitter'
-  if (url.includes('snapchat.com')) return 'snapchat'
-  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube'
-  if (url.includes('spotify.com')) return 'spotify'
-  if (url.includes('soundcloud.com')) return 'soundcloud'
-  return 'custom'
-}
-
 export default function LinksPage() {
   const supabase = useMemo(() => createClient(), [])
   const [links, setLinks] = useState<LinkRow[]>([])
   const [loading, setLoading] = useState(true)
   const [newUrl, setNewUrl] = useState('')
+  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null)
+  const [category, setCategory] = useState<PlatformCategory | 'all'>('all')
+  const [iconQuery, setIconQuery] = useState('')
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
 
@@ -57,6 +56,18 @@ export default function LinksPage() {
     fetchLinks()
   }, [fetchLinks])
 
+  const activePlatform = selectedPlatform ?? (newUrl.trim() ? detectPlatform(newUrl) : 'instagram')
+  const activePlatformDef = PLATFORMS.find((p) => p.id === activePlatform) ?? PLATFORMS[0]
+
+  const filteredPlatforms = useMemo(() => {
+    const q = iconQuery.trim().toLowerCase()
+    return PLATFORMS.filter((p) => {
+      const catMatch = category === 'all' || p.category === category
+      const qMatch = !q || p.label.toLowerCase().includes(q) || p.id.includes(q)
+      return catMatch && qMatch
+    })
+  }, [category, iconQuery])
+
   async function addLink() {
     setError('')
 
@@ -66,7 +77,7 @@ export default function LinksPage() {
       return
     }
 
-    const platform = detectPlatform(normalised.url)
+    const platform = selectedPlatform ?? detectPlatform(normalised.url)
 
     const res = await fetch('/api/links', {
       method: 'POST',
@@ -81,6 +92,7 @@ export default function LinksPage() {
     }
 
     setNewUrl('')
+    setSelectedPlatform(null)
     fetchLinks()
   }
 
@@ -115,52 +127,131 @@ export default function LinksPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-6 md:p-10">
+    <div className="mx-auto max-w-3xl space-y-6 p-6 md:p-10">
       <BlurFade delay={0.03}>
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
           Links
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Add your socials or websites. Platform icons are detected automatically.
+          Pick any social, music, messaging, or creator app icon — or paste a link and Xlay detects
+          it automatically.
         </p>
       </BlurFade>
 
+      {/* Add link + Full Platform Icon Picker */}
       <BlurFade delay={0.07}>
         <Card className="rounded-2xl border-border bg-card py-0 shadow-none">
-          <CardContent className="space-y-3 p-6">
-            <h2 className="font-display text-sm font-bold text-foreground">Add a link</h2>
-            <div className="flex gap-2">
-              <Input
-                type="url"
-                value={newUrl}
-                onChange={(e) => {
-                  setNewUrl(e.target.value)
-                  if (error) setError('')
-                }}
-                onKeyDown={(e) => e.key === 'Enter' && startTransition(addLink)}
-                placeholder="instagram.com/yourname or yoursite.com"
-                className="min-h-[46px] flex-1 rounded-xl"
-              />
-              <Button
-                type="button"
-                onClick={() => startTransition(addLink)}
-                disabled={isPending}
-                className="min-h-[46px] rounded-xl px-4 font-semibold"
-              >
-                <Plus size={16} aria-hidden="true" />
-                Add
-              </Button>
+          <CardContent className="space-y-5 p-6">
+            {/* URL input row */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-sm font-bold text-foreground">Add a link</h2>
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <PlatformIcon platform={activePlatform} size={13} className="text-primary" />
+                  {activePlatformDef.label}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <PlatformIcon platform={activePlatform} size={16} />
+                  </span>
+                  <Input
+                    type="url"
+                    value={newUrl}
+                    onChange={(e) => {
+                      setNewUrl(e.target.value)
+                      if (error) setError('')
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && startTransition(addLink)}
+                    placeholder={activePlatformDef.placeholder}
+                    className="min-h-[46px] rounded-xl pl-10"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => startTransition(addLink)}
+                  disabled={isPending}
+                  className="min-h-[46px] rounded-xl px-4 font-semibold"
+                >
+                  <Plus size={16} aria-hidden="true" />
+                  Add
+                </Button>
+              </div>
+              {error && <p className="text-xs text-red-400">{error}</p>}
             </div>
-            {error && <p className="text-xs text-red-400">{error}</p>}
+
+            {/* Platform picker header + search */}
+            <div className="space-y-3 border-t border-border pt-4">
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap gap-1.5">
+                  {PLATFORM_CATEGORIES.map((cat) => {
+                    const active = category === cat.id
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setCategory(cat.id)}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
+                          active
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08] hover:text-foreground'
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div className="relative sm:w-44">
+                  <Search
+                    size={13}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    type="text"
+                    value={iconQuery}
+                    onChange={(e) => setIconQuery(e.target.value)}
+                    placeholder="Filter apps…"
+                    className="h-8 rounded-lg pl-8 text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Icon grid */}
+              <div className="grid max-h-[220px] grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-5 md:grid-cols-6">
+                {filteredPlatforms.map((p) => {
+                  const isSelected = activePlatform === p.id
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setSelectedPlatform(p.id)}
+                      className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-center transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-primary/60 bg-primary/10 text-primary'
+                          : 'border-border bg-background/60 text-muted-foreground hover:border-white/20 hover:text-foreground'
+                      }`}
+                    >
+                      <PlatformIcon platform={p.id} size={18} />
+                      <span className="w-full truncate text-[10px] font-medium">{p.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </BlurFade>
 
+      {/* Active links list */}
       <BlurFade delay={0.11} className="space-y-2.5">
         {links.length === 0 && (
           <Card className="rounded-2xl border-dashed border-border bg-card/50 py-0 shadow-none">
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              No links yet. Paste your first link above.
+              No links yet. Pick an app icon above and paste your link.
             </CardContent>
           </Card>
         )}
@@ -177,7 +268,9 @@ export default function LinksPage() {
                 <PlatformIcon platform={link.platform} size={17} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold capitalize text-foreground">{link.platform}</p>
+                <p className="text-sm font-semibold text-foreground">
+                  {getPlatformLabel(link.platform)}
+                </p>
                 <p className="truncate text-xs text-muted-foreground">{link.url}</p>
               </div>
               <div className="flex flex-shrink-0 items-center gap-1.5">

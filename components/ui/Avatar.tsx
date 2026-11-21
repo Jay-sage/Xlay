@@ -19,7 +19,7 @@ export interface AvatarProps {
 export default function Avatar({
   avatarUrl,
   avatarSource = 'bitmoji',
-  avatarPose = '10219858',
+  avatarPose = '582513516',
   displayName = '?',
   accentColor = 'var(--color-accent)',
   size = 'md',
@@ -43,11 +43,11 @@ export default function Avatar({
   if (useFullBody && resolvedSrc) {
     const dims =
       size === 'card'
-        ? 'h-52 w-52 sm:h-60 sm:w-60'
+        ? 'h-64 w-56 sm:h-72 sm:w-64'
         : size === 'preview'
-          ? 'h-36 w-36'
+          ? 'h-44 w-40'
           : size === 'lg'
-            ? 'h-40 w-40'
+            ? 'h-48 w-44'
             : 'h-24 w-24'
 
     return (

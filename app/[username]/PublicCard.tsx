@@ -1,6 +1,7 @@
 'use client'
 // app/[username]/PublicCard.tsx - Full-screen card with tap-to-enter
 import Avatar from '@/components/ui/Avatar'
+import { getLinkHostname } from '@/lib/url'
 import { useEffect, useRef, useState } from 'react'
 
 const PLATFORM_ICONS: Record<string, string> = {
@@ -191,19 +192,28 @@ export default function PublicCard({ profile, links, friends, viewCount, refSour
         {/* Links pill */}
         {links.length > 0 && (
           <div className="glass rounded-full px-6 py-3 flex gap-5 flex-wrap justify-center">
-            {links.map(l => (
-              <a
-                key={l.id}
-                href={l.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => fetch('/api/links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ linkId: l.id, ref: refSource }) })}
-                className="text-2xl hover:scale-110 transition-transform"
-                title={l.platform}
-              >
-                {PLATFORM_ICONS[l.platform] ?? PLATFORM_ICONS.custom}
-              </a>
-            ))}
+            {links.map(l => {
+              // Custom links are identified by their hostname so the icon is
+              // meaningful without a favicon service (no third-party requests).
+              const hostname = getLinkHostname(l.url)
+              const isCustom = l.platform === 'custom'
+              const accessibleName = isCustom ? (hostname ?? l.url) : l.platform
+
+              return (
+                <a
+                  key={l.id}
+                  href={l.url}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow ugc"
+                  onClick={() => fetch('/api/links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'click', linkId: l.id, ref: refSource }) })}
+                  className="text-2xl hover:scale-110 transition-transform"
+                  title={accessibleName}
+                  aria-label={accessibleName}
+                >
+                  {PLATFORM_ICONS[l.platform] ?? PLATFORM_ICONS.custom}
+                </a>
+              )
+            })}
           </div>
         )}
 

@@ -1,13 +1,10 @@
 'use client'
 // app/dashboard/links/page.tsx - Manage links
 import { createClient } from '@/lib/supabase/client'
+import { normalizeUrl } from '@/lib/url'
 import { useEffect, useState, useTransition } from 'react'
 
 type Link = { id: string; platform: string; url: string; sort_order: number; is_active: boolean }
-
-const PLATFORMS = [
-  'instagram','tiktok','twitter','snapchat','youtube','spotify','soundcloud','custom'
-]
 
 function detectPlatform(url: string): string {
   if (!url) return 'custom'
@@ -44,19 +41,30 @@ export default function LinksPage() {
   useEffect(() => { fetchLinks() }, [])
 
   async function addLink() {
-    if (!newUrl.trim()) return
     setError('')
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const platform = detectPlatform(newUrl)
-    const { error } = await supabase.from('links').insert({
-      profile_id: user.id,
-      url: newUrl.trim(),
-      platform,
-      sort_order: links.length,
-      is_active: true,
+
+    // Validate inline first so the user gets an instant, friendly message.
+    const normalised = normalizeUrl(newUrl)
+    if (!normalised.ok) {
+      setError(normalised.message)
+      return
+    }
+
+    const platform = detectPlatform(normalised.url)
+
+    // The server validates again — the client check is only for fast feedback.
+    const res = await fetch('/api/links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create', url: newUrl, platform }),
     })
-    if (error) { setError('Could not add link.'); return }
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      setError(data?.message ?? 'Could not add link.')
+      return
+    }
+
     setNewUrl('')
     fetchLinks()
   }
@@ -82,6 +90,53 @@ export default function LinksPage() {
     fetchLinks()
   }
 
+  // ---- Inline editing ------------------------------------------------
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editUrl, setEditUrl] = useState('')
+  const [editError, setEditError] = useState('')
+
+  function startEdit(link: Link) {
+    setEditingId(link.id)
+    setEditUrl(link.url)
+    setEditError('')
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditUrl('')
+    setEditError('')
+  }
+
+  async function saveEdit(linkId: string) {
+    setEditError('')
+
+    const normalised = normalizeUrl(editUrl)
+    if (!normalised.ok) {
+      setEditError(normalised.message)
+      return
+    }
+
+    const res = await fetch('/api/links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update',
+        linkId,
+        url: editUrl,
+        platform: detectPlatform(normalised.url),
+      }),
+    })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      setEditError(data?.message ?? 'Could not save link.')
+      return
+    }
+
+    cancelEdit()
+    fetchLinks()
+  }
+
   if (loading) return <div className="p-10 text-[var(--color-text-secondary)]">Loading…</div>
 
   return (
@@ -93,11 +148,14 @@ export default function LinksPage() {
         <h2 className="text-sm font-semibold text-[var(--color-text-secondary)]">Add a link</h2>
         <div className="flex gap-2">
           <input
-            type="url"
+            type="text"
+            inputMode="url"
             value={newUrl}
             onChange={e => setNewUrl(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addLink()}
-            placeholder="https://instagram.com/yourname"
+            placeholder="instagram.com/yourname"
+            aria-label="Link URL"
+            aria-invalid={error ? true : undefined}
             className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-accent)]/50"
           />
           <button onClick={() => startTransition(addLink)} disabled={isPending}
@@ -105,7 +163,7 @@ export default function LinksPage() {
             Add
           </button>
         </div>
-        {error && <p className="text-red-400 text-xs">{error}</p>}
+        {error && <p className="text-red-400 text-xs" role="alert">{error}</p>}
       </div>
 
       {/* Link list */}
@@ -120,22 +178,58 @@ export default function LinksPage() {
             <span className="text-lg flex-shrink-0">
               {link.platform === 'instagram' ? '📸' : link.platform === 'tiktok' ? '🎵' : link.platform === 'twitter' ? '𝕏' : link.platform === 'snapchat' ? '👻' : link.platform === 'youtube' ? '▶️' : link.platform === 'spotify' ? '🎧' : link.platform === 'soundcloud' ? '☁️' : '🔗'}
             </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-[var(--color-text-primary)] capitalize">{link.platform}</p>
-              <p className="text-xs text-[var(--color-text-secondary)] truncate">{link.url}</p>
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button onClick={() => moveLink(link.id, 'up')} disabled={i === 0}
-                className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-20 text-sm">↑</button>
-              <button onClick={() => moveLink(link.id, 'down')} disabled={i === links.length - 1}
-                className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-20 text-sm">↓</button>
-              <button onClick={() => toggleLink(link.id, link.is_active)}
-                className={`px-2 py-1 rounded-lg text-xs font-medium ${link.is_active ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-[var(--color-text-secondary)]'}`}>
-                {link.is_active ? 'On' : 'Off'}
-              </button>
-              <button onClick={() => deleteLink(link.id)}
-                className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-400 text-sm">✕</button>
-            </div>
+
+            {editingId === link.id ? (
+              <div className="flex-1 min-w-0 space-y-2">
+                <input
+                  type="text"
+                  inputMode="url"
+                  value={editUrl}
+                  onChange={e => setEditUrl(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') saveEdit(link.id)
+                    if (e.key === 'Escape') cancelEdit()
+                  }}
+                  aria-label="Edit link URL"
+                  aria-invalid={editError ? true : undefined}
+                  autoFocus
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]/50"
+                />
+                {editError && <p className="text-red-400 text-xs" role="alert">{editError}</p>}
+                <div className="flex gap-2">
+                  <button onClick={() => saveEdit(link.id)}
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium bg-green-500/20 text-green-400">
+                    Save
+                  </button>
+                  <button onClick={cancelEdit}
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium bg-white/5 text-[var(--color-text-secondary)]">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-[var(--color-text-primary)] capitalize">{link.platform}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] truncate">{link.url}</p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button onClick={() => startEdit(link)}
+                    aria-label={`Edit ${link.url}`}
+                    className="p-1.5 rounded-lg hover:bg-white/5 text-sm">✎</button>
+                  <button onClick={() => moveLink(link.id, 'up')} disabled={i === 0}
+                    className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-20 text-sm">↑</button>
+                  <button onClick={() => moveLink(link.id, 'down')} disabled={i === links.length - 1}
+                    className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-20 text-sm">↓</button>
+                  <button onClick={() => toggleLink(link.id, link.is_active)}
+                    className={`px-2 py-1 rounded-lg text-xs font-medium ${link.is_active ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-[var(--color-text-secondary)]'}`}>
+                    {link.is_active ? 'On' : 'Off'}
+                  </button>
+                  <button onClick={() => deleteLink(link.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-400 text-sm">✕</button>
+                </div>
+              </>
+            )}
           </div>
         ))}
       </div>

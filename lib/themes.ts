@@ -1,4 +1,5 @@
-// lib/themes.ts - Shared theme definitions for Theme Editor, CardPreview, and PublicCard
+// lib/themes.ts - Shared theme definitions for Theme Editor, CardPreview, PublicCard,
+// and the future v2 Community Templates & Theme Publisher blueprint.
 
 export interface ThemePreset {
   id: string
@@ -67,5 +68,67 @@ export function resolveCardColors(profile: {
     surface: preset.surface,
     accent: profile.accent_color || preset.accent,
     preset,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// v2 Blueprint: Community Templates & Theme Publisher (not yet mounted in UI)
+// ---------------------------------------------------------------------------
+// Strictly stores visual style tokens only — never personal links, bios, or
+// Snapchat Bitmoji artwork (keeps published templates 100% Snap-compliant).
+
+export interface TemplateStyleConfig {
+  theme_id: string
+  accent_color: string
+  bg_glow: boolean
+  avatar_pose: string
+  // Extensible v2 slots:
+  card_radius?: 'sharp' | 'rounded' | 'pill'
+  surface_blur?: 'none' | 'subtle' | 'glass'
+  font_pair?: 'syne-dm' | 'editorial' | 'mono'
+  link_layout?: 'icons' | 'pills' | 'cards'
+}
+
+export interface CommunityTemplate {
+  id: string
+  slug: string
+  name: string
+  description: string
+  author_username: string
+  tags: string[]
+  uses_count: number
+  stars_count: number
+  is_starred?: boolean
+  created_at: string
+  style: TemplateStyleConfig
+}
+
+export interface PublishTemplateDraft {
+  name: string
+  description: string
+  tags: string[]
+  style: TemplateStyleConfig
+}
+
+/**
+ * Extracts only shareable visual theme settings from a user's profile so
+ * publishing a template never leaks personal links, bio, or Bitmoji URLs.
+ */
+export function serializeProfileToTemplateConfig(profile: {
+  theme_id?: string | null
+  accent_color?: string | null
+  bg_glow?: boolean | null
+  avatar_pose?: string | null
+}): TemplateStyleConfig {
+  const { accent, preset } = resolveCardColors(profile)
+  return {
+    theme_id: preset.id,
+    accent_color: accent,
+    bg_glow: profile.bg_glow ?? true,
+    avatar_pose: profile.avatar_pose ?? '30415970',
+    card_radius: 'rounded',
+    surface_blur: 'subtle',
+    font_pair: 'syne-dm',
+    link_layout: 'icons',
   }
 }

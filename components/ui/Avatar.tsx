@@ -19,7 +19,7 @@ export interface AvatarProps {
 export default function Avatar({
   avatarUrl,
   avatarSource = 'bitmoji',
-  avatarPose = '10221961',
+  avatarPose = '10219858',
   displayName = '?',
   accentColor = 'var(--color-accent)',
   size = 'md',

@@ -9,21 +9,21 @@ export interface BitmojiPose {
 
 export const BITMOJI_POSES: BitmojiPose[] = [
   {
-    id: '10221961',
-    label: 'Full Body Vibe',
-    description: 'Standing 3D full-body pose',
+    id: '10219858',
+    label: 'Standing',
+    description: 'Clean upright full-body 3D pose',
     isFullBody: true,
   },
   {
-    id: '10218954',
-    label: 'Breakdance',
-    description: 'Full-body 3D with boombox',
+    id: '10226022',
+    label: 'Neutral 3D',
+    description: 'Simple neutral 3D cutout',
     isFullBody: true,
   },
   {
-    id: '10228445',
-    label: 'Drop',
-    description: 'Full-body 3D action pose',
+    id: '10222123',
+    label: 'Chilling',
+    description: 'Relaxed full-body 3D pose',
     isFullBody: true,
   },
   {
@@ -33,9 +33,9 @@ export const BITMOJI_POSES: BitmojiPose[] = [
     isFullBody: true,
   },
   {
-    id: '10226496',
-    label: 'Heart Wave',
-    description: '3D waving behind a heart',
+    id: '10218954',
+    label: 'Breakdance',
+    description: 'Full-body 3D with boombox',
     isFullBody: true,
   },
   {
@@ -46,7 +46,7 @@ export const BITMOJI_POSES: BitmojiPose[] = [
   },
 ]
 
-export const DEFAULT_BITMOJI_POSE = '10221961'
+export const DEFAULT_BITMOJI_POSE = '10219858'
 
 /**
  * Extracts the opaque Bitmoji avatar ID from a Snap Login Kit URL.

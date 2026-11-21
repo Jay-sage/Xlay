@@ -1,5 +1,6 @@
 'use client'
 // app/dashboard/settings/page.tsx
+import { BITMOJI_POSES, DEFAULT_BITMOJI_POSE, getBitmojiPoseUrl } from '@/lib/snap/bitmoji'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
@@ -9,6 +10,8 @@ export default function SettingsPage() {
   const router = useRouter()
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [avatarPose, setAvatarPose] = useState(DEFAULT_BITMOJI_POSE)
   const [isPrivate, setIsPrivate] = useState(false)
   const [saved, setSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -20,12 +23,14 @@ export default function SettingsPage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
       setUserId(user.id)
-      supabase.from('profiles').select('display_name,bio,is_private').eq('id', user.id).single()
+      supabase.from('profiles').select('display_name,bio,is_private,avatar_url,avatar_pose').eq('id', user.id).single()
         .then(({ data }) => {
           if (data) {
             setDisplayName(data.display_name ?? '')
             setBio(data.bio ?? '')
             setIsPrivate(data.is_private ?? false)
+            setAvatarUrl(data.avatar_url ?? null)
+            setAvatarPose(data.avatar_pose ?? DEFAULT_BITMOJI_POSE)
           }
         })
     })
@@ -38,6 +43,7 @@ export default function SettingsPage() {
         display_name: displayName.trim(),
         bio: bio.trim() || null,
         is_private: isPrivate,
+        avatar_pose: avatarPose,
       }).eq('id', userId)
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
@@ -88,6 +94,46 @@ export default function SettingsPage() {
   return (
     <div className="p-6 md:p-10 max-w-2xl mx-auto space-y-8">
       <h1 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">Settings</h1>
+
+      {/* Bitmoji 3D Pose Picker */}
+      {avatarUrl && (
+        <div className="glass rounded-2xl p-5 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-[var(--color-text-secondary)]">Bitmoji Pose (3D)</h2>
+            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+              Choose full-body 3D or classic portrait for your card.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {BITMOJI_POSES.map((pose) => {
+              const previewSrc = getBitmojiPoseUrl(avatarUrl, pose.id) ?? avatarUrl
+              const active = avatarPose === pose.id
+              return (
+                <button
+                  key={pose.id}
+                  type="button"
+                  onClick={() => setAvatarPose(pose.id)}
+                  className={`rounded-xl p-3 flex flex-col items-center gap-2 transition-all bg-white/5 ${
+                    active
+                      ? 'ring-2 ring-[var(--color-accent)] bg-[var(--color-accent)]/10'
+                      : 'hover:bg-white/10'
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={previewSrc}
+                    alt={pose.label}
+                    className={`h-20 w-20 ${pose.isFullBody ? 'object-contain' : 'rounded-full object-cover'}`}
+                  />
+                  <span className="text-xs font-medium text-[var(--color-text-primary)] text-center leading-tight">
+                    {pose.label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Profile */}
       <div className="glass rounded-2xl p-5 space-y-4">

@@ -1,11 +1,13 @@
 'use client'
 // CardPreview.tsx - iPhone-frame mock of the public card
+import Avatar from '@/components/ui/Avatar'
 
 interface Profile {
   username: string | null
   display_name: string
   avatar_url: string | null
   avatar_source: string
+  avatar_pose?: string | null
   bio: string | null
   theme_id: string
   accent_color: string | null
@@ -69,20 +71,15 @@ export default function CardPreview({
           }
         >
           {/* Avatar */}
-          <div className="relative mt-4">
-            <div className="absolute inset-0 rounded-full border-2 border-[var(--color-accent)] scale-110" />
-            {profile.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={profile.avatar_url}
-                alt={profile.display_name}
-                className="relative h-20 w-20 rounded-full object-cover bg-white/5"
-              />
-            ) : (
-              <div className="relative h-20 w-20 rounded-full bg-[var(--color-accent)]/20 flex items-center justify-center text-2xl">
-                {profile.display_name?.[0]?.toUpperCase() ?? '?'}
-              </div>
-            )}
+          <div className="mt-2">
+            <Avatar
+              avatarUrl={profile.avatar_url}
+              avatarSource={profile.avatar_source}
+              avatarPose={profile.avatar_pose}
+              displayName={profile.display_name}
+              accentColor={profile.accent_color ?? 'var(--color-accent)'}
+              size="preview"
+            />
           </div>
 
           {/* Name & handle */}

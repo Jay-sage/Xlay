@@ -49,7 +49,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   // Fetch profile
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, display_name, avatar_url, avatar_source, bio, theme_id, accent_color, bg_type, bg_url, music_url, music_title, streak_count, snap_score, show_streak, show_score, show_views, is_private')
+    .select('id, username, display_name, avatar_url, avatar_source, avatar_pose, bio, theme_id, accent_color, bg_type, bg_url, music_url, music_title, streak_count, snap_score, show_streak, show_score, show_views, is_private')
     .eq('username', username.toLowerCase())
     .single()
 

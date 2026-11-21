@@ -1,5 +1,6 @@
 'use client'
 // app/[username]/PublicCard.tsx - Full-screen card with tap-to-enter
+import Avatar from '@/components/ui/Avatar'
 import { useEffect, useRef, useState } from 'react'
 
 const PLATFORM_ICONS: Record<string, string> = {
@@ -13,6 +14,7 @@ interface Profile {
   display_name: string
   avatar_url: string | null
   avatar_source: string
+  avatar_pose?: string | null
   bio: string | null
   theme_id: string
   accent_color: string | null
@@ -120,10 +122,14 @@ export default function PublicCard({ profile, links, friends, viewCount, refSour
           className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-black/60 backdrop-blur-sm"
           aria-label="Enter card"
         >
-          {profile.avatar_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={profile.avatar_url} alt={profile.display_name} className="h-24 w-24 rounded-full object-cover ring-2 ring-white/20" />
-          )}
+          <Avatar
+            avatarUrl={profile.avatar_url}
+            avatarSource={profile.avatar_source}
+            avatarPose={profile.avatar_pose}
+            displayName={profile.display_name}
+            accentColor={accent}
+            size="lg"
+          />
           <div className="text-center space-y-1">
             <p className="font-display text-2xl font-bold text-white">{profile.display_name}</p>
             <p className="text-sm text-white/50">@{profile.username}</p>
@@ -136,28 +142,16 @@ export default function PublicCard({ profile, links, friends, viewCount, refSour
       )}
 
       {/* Card content */}
-      <main className="relative z-10 w-full max-w-sm mx-auto flex flex-col items-center pt-16 pb-20 px-6 gap-5 min-h-screen">
-        {/* Avatar */}
-        <div className="relative">
-          <div
-            className="absolute -inset-1.5 rounded-full"
-            style={{ background: `conic-gradient(from 0deg, ${accent}, transparent, ${accent})`, filter: 'blur(4px)' }}
-          />
-          <div className="absolute -inset-0.5 rounded-full border-2" style={{ borderColor: accent }} />
-          {profile.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={profile.avatar_url}
-              alt={profile.display_name}
-              className="relative h-28 w-28 rounded-full object-cover bg-white/5"
-              style={{ imageRendering: 'auto' }}
-            />
-          ) : (
-            <div className="relative h-28 w-28 rounded-full bg-white/10 flex items-center justify-center font-display text-4xl font-bold text-white">
-              {profile.display_name?.[0]?.toUpperCase() ?? '?'}
-            </div>
-          )}
-        </div>
+      <main className="relative z-10 w-full max-w-sm mx-auto flex flex-col items-center pt-12 pb-20 px-6 gap-5 min-h-screen">
+        {/* Avatar (Full-body 3D Bitmoji or Classic Circle) */}
+        <Avatar
+          avatarUrl={profile.avatar_url}
+          avatarSource={profile.avatar_source}
+          avatarPose={profile.avatar_pose}
+          displayName={profile.display_name}
+          accentColor={accent}
+          size="card"
+        />
 
         {/* Name + handle */}
         <div className="text-center space-y-1">

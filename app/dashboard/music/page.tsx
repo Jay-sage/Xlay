@@ -1,9 +1,15 @@
 'use client'
-// app/dashboard/music/page.tsx - Apple Music search & selection
+// app/dashboard/music/page.tsx - Apple Music search & 30s preview selection
+import { Badge } from '@/components/ui/badge'
+import { BlurFade } from '@/components/ui/blur-fade'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { Check, Loader2, Music, Pause, Play, Search, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 
-interface iTunesTrack {
+interface ITunesTrack {
   trackId: number
   trackName: string
   artistName: string
@@ -13,11 +19,11 @@ interface iTunesTrack {
 }
 
 export default function MusicPage() {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const [currentUrl, setCurrentUrl] = useState<string | null>(null)
   const [currentTitle, setCurrentTitle] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
-  const [results, setResults] = useState<iTunesTrack[]>([])
+  const [results, setResults] = useState<ITunesTrack[]>([])
   const [searching, setSearching] = useState(false)
   const [playingPreview, setPlayingPreview] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -72,9 +78,11 @@ export default function MusicPage() {
     }
   }
 
-  function selectSong(track: iTunesTrack) {
+  function selectSong(track: ITunesTrack) {
     startTransition(async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) return
       const title = `${track.trackName} — ${track.artistName}`
       await supabase
@@ -91,16 +99,16 @@ export default function MusicPage() {
 
   function removeTrack() {
     startTransition(async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) return
       await supabase
         .from('profiles')
         .update({ music_url: null, music_title: null })
         .eq('id', user.id)
 
-      if (audioPreviewRef.current) {
-        audioPreviewRef.current.pause()
-      }
+      audioPreviewRef.current?.pause()
       setCurrentUrl(null)
       setCurrentTitle('')
       setPlayingPreview(null)
@@ -108,112 +116,132 @@ export default function MusicPage() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-2xl mx-auto space-y-8">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">
-          Soundtrack (Apple Music)
+    <div className="mx-auto max-w-2xl space-y-6 p-6 md:p-10">
+      <BlurFade delay={0.03}>
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          Soundtrack
         </h1>
-        <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-          Pick any song on Apple Music. Visitors hear the official 30-second preview when entering your card. Zero copyright hassle!
+        <p className="mt-1 text-sm text-muted-foreground">
+          Search Apple Music for any track. Visitors hear the official 30-second preview when they
+          tap into your card.
         </p>
-      </div>
+      </BlurFade>
 
       {currentUrl && (
-        <div className="glass rounded-2xl p-5 space-y-3 border border-[var(--color-accent)]/30">
-          <p className="text-xs uppercase tracking-wider font-semibold text-[var(--color-accent)]">
-            Active on your card
-          </p>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                {currentTitle}
-              </p>
-              <p className="text-xs text-[var(--color-text-secondary)]">Apple Music 30s preview</p>
-            </div>
-            <button
-              onClick={removeTrack}
-              disabled={isPending}
-              className="text-xs text-red-400 hover:underline flex-shrink-0"
-            >
-              Remove
-            </button>
-          </div>
-          <audio controls src={currentUrl} className="w-full h-8 mt-2" />
-        </div>
+        <BlurFade delay={0.07}>
+          <Card className="rounded-2xl border-primary/30 bg-card py-0 shadow-none">
+            <CardContent className="space-y-3 p-6">
+              <div className="flex items-center justify-between gap-3">
+                <Badge className="gap-1.5 rounded-full bg-primary/15 text-primary hover:bg-primary/15">
+                  <Music size={12} aria-hidden="true" />
+                  Active on your card
+                </Badge>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={removeTrack}
+                  disabled={isPending}
+                  className="text-red-400 hover:bg-red-500/10 hover:text-red-400"
+                >
+                  <Trash2 size={12} aria-hidden="true" />
+                  Remove
+                </Button>
+              </div>
+              <p className="text-sm font-semibold text-foreground">{currentTitle}</p>
+              <audio controls src={currentUrl} className="h-9 w-full" />
+            </CardContent>
+          </Card>
+        </BlurFade>
       )}
 
-      {/* Search Bar */}
-      <div className="glass rounded-2xl p-5 space-y-4">
-        <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
-          Search songs, artists, or albums
-        </h2>
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="e.g. Asake, Rema, Burna Boy, Drake..."
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-accent)]/50"
-          />
-          <button
-            type="submit"
-            disabled={searching}
-            className="btn-primary px-5 py-3 rounded-xl text-sm font-semibold disabled:opacity-50"
-          >
-            {searching ? 'Searching…' : 'Search'}
-          </button>
-        </form>
-
-        {saved && <p className="text-xs text-green-400 font-semibold">✓ Saved to your card!</p>}
-
-        {/* Results */}
-        <div className="space-y-2 mt-4 max-h-[420px] overflow-y-auto pr-1">
-          {results.map((track) => (
-            <div
-              key={track.trackId}
-              className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={track.artworkUrl}
-                alt={track.trackName}
-                className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+      <BlurFade delay={0.11}>
+        <Card className="rounded-2xl border-border bg-card py-0 shadow-none">
+          <CardContent className="space-y-4 p-6">
+            <h2 className="font-display text-sm font-bold text-foreground">
+              Search Apple Music
+            </h2>
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <Input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Asake, Rema, Burna Boy, Wizkid…"
+                className="min-h-[46px] flex-1 rounded-xl"
               />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
-                  {track.trackName}
-                </p>
-                <p className="text-xs text-[var(--color-text-secondary)] truncate">
-                  {track.artistName}
-                </p>
-              </div>
+              <Button
+                type="submit"
+                disabled={searching}
+                className="min-h-[46px] rounded-xl px-5 font-semibold"
+              >
+                {searching ? (
+                  <Loader2 size={15} className="animate-spin" aria-hidden="true" />
+                ) : (
+                  <Search size={15} aria-hidden="true" />
+                )}
+                Search
+              </Button>
+            </form>
 
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={() => togglePreview(track.previewUrl)}
-                  className="px-3 py-1.5 rounded-lg text-xs bg-white/10 hover:bg-white/20 text-white font-medium"
-                >
-                  {playingPreview === track.previewUrl ? '⏸ Pause' : '▶ Preview'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => selectSong(track)}
-                  disabled={isPending}
-                  className="btn-primary px-3 py-1.5 rounded-lg text-xs font-semibold"
-                >
-                  Choose
-                </button>
-              </div>
+            {saved && (
+              <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                <Check size={13} aria-hidden="true" />
+                Saved to your card
+              </p>
+            )}
+
+            <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+              {results.map((track) => {
+                const isPlaying = playingPreview === track.previewUrl
+                return (
+                  <div
+                    key={track.trackId}
+                    className="flex items-center gap-3 rounded-xl border border-border bg-background/60 p-3 transition-colors hover:bg-white/[0.04]"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={track.artworkUrl}
+                      alt={track.trackName}
+                      className="h-12 w-12 flex-shrink-0 rounded-lg object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {track.trackName}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{track.artistName}</p>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-1.5">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="icon-sm"
+                        onClick={() => togglePreview(track.previewUrl)}
+                        aria-label={isPlaying ? 'Pause preview' : 'Play preview'}
+                      >
+                        {isPlaying ? <Pause size={14} /> : <Play size={14} />}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => selectSong(track)}
+                        disabled={isPending}
+                        className="rounded-lg font-semibold"
+                      >
+                        Choose
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+              {results.length === 0 && !searching && searchTerm && (
+                <p className="py-6 text-center text-xs text-muted-foreground">
+                  No matching tracks found. Try another search.
+                </p>
+              )}
             </div>
-          ))}
-          {results.length === 0 && !searching && searchTerm && (
-            <p className="text-xs text-[var(--color-text-secondary)] text-center py-4">
-              No matching songs found. Try a different search term.
-            </p>
-          )}
-        </div>
-      </div>
+          </CardContent>
+        </Card>
+      </BlurFade>
     </div>
   )
 }

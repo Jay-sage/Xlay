@@ -1,8 +1,12 @@
 'use client'
-// CardPreview.tsx - iPhone-frame mock of the public card
-import Avatar from '@/components/ui/Avatar'
+// CardPreview.tsx - Live iPhone-frame preview of the user's public card
 
-interface Profile {
+import Avatar from '@/components/ui/Avatar'
+import { PlatformIcon } from '@/components/ui/PlatformIcon'
+import { resolveCardColors } from '@/lib/themes'
+import { Flame, Music, Sparkles } from 'lucide-react'
+
+export interface PreviewProfile {
   username: string | null
   display_name: string
   avatar_url: string | null
@@ -11,6 +15,7 @@ interface Profile {
   bio: string | null
   theme_id: string
   accent_color: string | null
+  bg_type?: string | null
   streak_count: number
   snap_score: number
   show_streak: boolean
@@ -19,28 +24,17 @@ interface Profile {
   music_title: string | null
 }
 
-interface Link {
+export interface PreviewLink {
   id: string
   platform: string
   url: string
   sort_order: number
 }
 
-interface Friend {
+export interface PreviewFriend {
   id: string
-  friend_profile_id: string | null
+  friend_profile_id?: string | null
   profiles: { display_name: string; avatar_url: string | null; username: string | null } | null
-}
-
-const PLATFORM_ICONS: Record<string, string> = {
-  instagram: '📸',
-  tiktok: '🎵',
-  twitter: '𝕏',
-  snapchat: '👻',
-  youtube: '▶️',
-  spotify: '🎧',
-  soundcloud: '☁️',
-  custom: '🔗',
 }
 
 export default function CardPreview({
@@ -48,68 +42,105 @@ export default function CardPreview({
   links,
   friends,
 }: {
-  profile: Profile | null
-  links: Link[]
-  friends: Friend[]
+  profile: PreviewProfile | null
+  links: PreviewLink[]
+  friends: PreviewFriend[]
 }) {
   if (!profile) return null
 
-  return (
-    <div className="flex justify-center">
-      {/* iPhone frame */}
-      <div className="relative w-[280px] h-[560px] rounded-[36px] border-[6px] border-white/10 overflow-hidden shadow-2xl bg-[#080808]">
-        {/* Notch */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 h-5 w-24 bg-black rounded-full z-10" />
+  const { bg, accent } = resolveCardColors(profile)
+  const hasGlow = profile.bg_type !== 'solid'
 
-        {/* Card content */}
+  return (
+    <div className="relative mx-auto w-full max-w-[300px]">
+      {/* Subtle ambient glow behind the phone */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -inset-6 rounded-[56px] opacity-15 blur-3xl transition-colors duration-300"
+        style={{ background: accent }}
+      />
+
+      {/* iPhone frame */}
+      <div className="relative rounded-[40px] border border-white/10 bg-[#0b0b0d] p-2 shadow-2xl shadow-black/70">
+        {/* Dynamic Island / notch */}
         <div
-          className="w-full h-full flex flex-col items-center pt-10 pb-4 px-4 overflow-y-auto"
+          aria-hidden="true"
+          className="absolute left-1/2 top-3.5 z-20 h-5 w-20 -translate-x-1/2 rounded-full bg-black"
+        />
+
+        {/* Screen */}
+        <div
+          className="relative flex h-[540px] flex-col items-center overflow-y-auto rounded-[32px] px-5 pt-11 pb-5 transition-colors duration-300"
           style={
-            profile.accent_color
-              ? ({ '--color-accent': profile.accent_color } as React.CSSProperties)
-              : undefined
+            {
+              backgroundColor: bg,
+              '--color-accent': accent,
+            } as React.CSSProperties
           }
         >
+          {/* Optional top radial glow */}
+          {hasGlow && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 top-0 h-60 opacity-[0.22] blur-3xl transition-colors duration-300"
+              style={{
+                background: `radial-gradient(ellipse at top, ${accent}, transparent 72%)`,
+              }}
+            />
+          )}
+
           {/* Avatar */}
-          <div className="mt-2">
+          <div className="relative z-10 mt-1">
             <Avatar
               avatarUrl={profile.avatar_url}
               avatarSource={profile.avatar_source}
               avatarPose={profile.avatar_pose}
               displayName={profile.display_name}
-              accentColor={profile.accent_color ?? 'var(--color-accent)'}
+              accentColor={accent}
               size="preview"
             />
           </div>
 
           {/* Name & handle */}
-          <div className="mt-3 text-center">
-            <p className="font-display text-sm font-bold text-white leading-tight">
+          <div className="relative z-10 mt-2 text-center">
+            <p className="font-display text-sm font-bold leading-tight text-white">
               {profile.display_name}
             </p>
-            <p className="text-[10px] text-white/50 mt-0.5">@{profile.username}</p>
+            <p className="mt-0.5 text-[11px] text-white/50">@{profile.username}</p>
           </div>
 
           {/* Bio */}
           {profile.bio && (
-            <p className="text-[10px] text-white/60 text-center mt-2 leading-relaxed max-w-[200px]">
+            <p className="relative z-10 mt-2 max-w-[215px] text-center text-[11px] leading-relaxed text-white/65">
               {profile.bio}
             </p>
           )}
 
           {/* Stats row */}
           {(profile.show_streak || profile.show_score) && (
-            <div className="flex gap-3 mt-3">
+            <div className="relative z-10 mt-3.5 flex gap-2">
               {profile.show_streak && (
-                <div className="glass rounded-xl px-3 py-1.5 text-center">
-                  <p className="text-[9px] text-white/50">Streak</p>
-                  <p className="text-xs font-bold text-[var(--color-accent)]">🔥 {profile.streak_count}</p>
+                <div className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-1.5 text-center">
+                  <p className="text-[9px] text-white/45">Streak</p>
+                  <p
+                    className="mt-0.5 flex items-center justify-center gap-1 text-xs font-bold"
+                    style={{ color: accent }}
+                  >
+                    <Flame size={11} aria-hidden="true" />
+                    {profile.streak_count}
+                  </p>
                 </div>
               )}
               {profile.show_score && (
-                <div className="glass rounded-xl px-3 py-1.5 text-center">
-                  <p className="text-[9px] text-white/50">Score</p>
-                  <p className="text-xs font-bold text-[var(--color-accent)]">{profile.snap_score.toLocaleString()}</p>
+                <div className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-1.5 text-center">
+                  <p className="text-[9px] text-white/45">Score</p>
+                  <p
+                    className="mt-0.5 flex items-center justify-center gap-1 text-xs font-bold"
+                    style={{ color: accent }}
+                  >
+                    <Sparkles size={11} aria-hidden="true" />
+                    {profile.snap_score.toLocaleString()}
+                  </p>
                 </div>
               )}
             </div>
@@ -117,27 +148,36 @@ export default function CardPreview({
 
           {/* Links pill */}
           {links.length > 0 && (
-            <div className="glass mt-4 flex gap-2 px-4 py-2.5 rounded-full flex-wrap justify-center max-w-full">
-              {links.map(l => (
-                <span key={l.id} className="text-sm" title={l.platform}>
-                  {PLATFORM_ICONS[l.platform] ?? PLATFORM_ICONS.custom}
+            <div className="relative z-10 mt-4 flex max-w-full flex-wrap justify-center gap-2.5 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2">
+              {links.map((l) => (
+                <span
+                  key={l.id}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white"
+                  title={l.platform}
+                >
+                  <PlatformIcon platform={l.platform} size={14} />
                 </span>
               ))}
             </div>
           )}
 
-          {/* Music */}
+          {/* Soundtrack bar */}
           {profile.music_title && (
-            <div className="mt-3 glass rounded-full px-3 py-1.5 flex items-center gap-2 max-w-full overflow-hidden">
-              <span className="text-[10px]">🎵</span>
-              <p className="text-[9px] text-white/70 truncate">{profile.music_title}</p>
+            <div className="relative z-10 mt-3.5 flex w-full max-w-[225px] items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">
+              <span
+                className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-black"
+                style={{ backgroundColor: accent }}
+              >
+                <Music size={11} aria-hidden="true" />
+              </span>
+              <p className="truncate text-[10px] text-white/75">{profile.music_title}</p>
             </div>
           )}
 
           {/* Best friends */}
           {friends.length > 0 && (
-            <div className="mt-3 flex -space-x-2">
-              {friends.slice(0, 3).map(f => (
+            <div className="relative z-10 mt-3.5 flex -space-x-2">
+              {friends.slice(0, 3).map((f) =>
                 f.profiles?.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -149,18 +189,18 @@ export default function CardPreview({
                 ) : (
                   <div
                     key={f.id}
-                    className="h-7 w-7 rounded-full border-2 border-[#080808] bg-white/10 flex items-center justify-center text-[8px] text-white"
+                    className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#080808] bg-white/10 text-[9px] font-semibold text-white"
                   >
                     {f.profiles?.display_name?.[0]?.toUpperCase() ?? '?'}
                   </div>
                 )
-              ))}
+              )}
             </div>
           )}
 
           {/* Powered by */}
-          <div className="mt-auto pt-4">
-            <p className="text-[8px] text-white/20 text-center">Powered by Xlay</p>
+          <div className="relative z-10 mt-auto pt-4">
+            <p className="text-center text-[9px] text-white/25">Powered by Xlay</p>
           </div>
         </div>
       </div>

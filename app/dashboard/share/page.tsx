@@ -1,108 +1,159 @@
 'use client'
 // app/dashboard/share/page.tsx
+import { BlurFade } from '@/components/ui/blur-fade'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { PlatformIcon } from '@/components/ui/PlatformIcon'
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
+import { Check, Copy, ExternalLink } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 
 const SHARE_PLATFORMS = [
-  { id: 'snapchat', label: 'Snapchat', icon: '👻', color: '#FFFC00', ref: 'snapchat' },
-  { id: 'whatsapp', label: 'WhatsApp', icon: '💬', color: '#25D366', ref: 'whatsapp' },
-  { id: 'tiktok', label: 'TikTok', icon: '🎵', color: '#ff0050', ref: 'tiktok' },
-  { id: 'instagram', label: 'Instagram', icon: '📸', color: '#E1306C', ref: 'instagram' },
+  { id: 'snapchat', label: 'Snapchat', ref: 'snapchat', copyOnly: true },
+  { id: 'whatsapp', label: 'WhatsApp', ref: 'whatsapp', copyOnly: false },
+  { id: 'tiktok', label: 'TikTok', ref: 'tiktok', copyOnly: true },
+  { id: 'instagram', label: 'Instagram', ref: 'instagram', copyOnly: true },
 ]
 
 export default function SharePage() {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const [username, setUsername] = useState('')
-  const [copied, setCopied] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
-      supabase.from('profiles').select('username').eq('id', user.id).single()
+      supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single()
         .then(({ data }) => setUsername(data?.username ?? ''))
     })
-  }, [])
+  }, [supabase])
 
   const baseUrl = `https://xlay.me/${username}`
 
-  function copyLink() {
-    navigator.clipboard.writeText(baseUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  function copy(text: string, id: string) {
+    navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 1800)
   }
 
   function shareUrl(ref: string) {
     return `${baseUrl}?ref=${ref}`
   }
 
-  function getShareHref(platform: string, ref: string): string {
+  function whatsappHref(ref: string) {
     const url = encodeURIComponent(shareUrl(ref))
-    const text = encodeURIComponent(`Check out my Xlay card 👇`)
-    switch (platform) {
-      case 'whatsapp': return `https://wa.me/?text=${text}%20${url}`
-      case 'tiktok': return '#' // TikTok doesn't support web share; just copy
-      case 'twitter': return `https://twitter.com/intent/tweet?url=${url}&text=${text}`
-      default: return '#'
-    }
+    const text = encodeURIComponent('Check out my Xlay card')
+    return `https://wa.me/?text=${text}%20${url}`
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-2xl mx-auto space-y-8">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">Share</h1>
-        <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-          Share your Xlay card and track where your visitors come from.
+    <div className="mx-auto max-w-2xl space-y-6 p-6 md:p-10">
+      <BlurFade delay={0.03}>
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          Share
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Drop your tagged links in your bios so Xlay can track where visitors come from.
         </p>
-      </div>
+      </BlurFade>
 
-      {/* Copy link */}
-      <div className="glass rounded-2xl p-5 space-y-3">
-        <h2 className="text-sm font-semibold text-[var(--color-text-secondary)]">Your link</h2>
-        <div className="flex items-center gap-2 bg-white/5 rounded-xl px-4 py-3">
-          <span className="flex-1 text-sm text-[var(--color-text-primary)] truncate">{baseUrl}</span>
-          <button
-            onClick={copyLink}
-            className="text-xs font-semibold text-[var(--color-accent)] flex-shrink-0 px-2 py-1 rounded-lg bg-[var(--color-accent)]/10"
-          >
-            {copied ? '✓ Copied' : 'Copy'}
-          </button>
-        </div>
-      </div>
+      <BlurFade delay={0.07}>
+        <Card className="rounded-2xl border-border bg-card py-0 shadow-none">
+          <CardContent className="space-y-3 p-6">
+            <h2 className="font-display text-sm font-bold text-foreground">Direct link</h2>
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-3">
+              <span className="flex-1 truncate text-sm font-medium text-foreground">{baseUrl}</span>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => copy(baseUrl, 'base')}
+                className="rounded-lg"
+              >
+                {copiedId === 'base' ? (
+                  <>
+                    <Check size={14} className="text-emerald-400" aria-hidden="true" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} aria-hidden="true" />
+                    Copy
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </BlurFade>
 
-      {/* Platform share buttons */}
-      <div className="glass rounded-2xl p-5 space-y-4">
-        <h2 className="text-sm font-semibold text-[var(--color-text-secondary)]">Share to</h2>
-        <div className="grid grid-cols-2 gap-3">
-          {SHARE_PLATFORMS.map(p => (
-            <a
-              key={p.id}
-              href={getShareHref(p.id, p.ref)}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={e => {
-                if (p.id === 'snapchat' || p.id === 'tiktok') {
-                  e.preventDefault()
-                  navigator.clipboard.writeText(shareUrl(p.ref))
-                  setCopied(true)
-                  setTimeout(() => setCopied(false), 2000)
-                }
-              }}
-              className="glass rounded-xl p-4 flex items-center gap-3 hover:ring-1 hover:ring-white/20 transition-all"
-            >
-              <span className="text-2xl">{p.icon}</span>
-              <div>
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{p.label}</p>
-                <p className="text-xs text-[var(--color-text-secondary)]">
-                  {p.id === 'snapchat' || p.id === 'tiktok' ? 'Copy link' : 'Open app'}
-                </p>
-              </div>
-            </a>
-          ))}
-        </div>
-        <p className="text-xs text-[var(--color-text-secondary)]">
-          Each link includes a <code className="text-[var(--color-accent)]">?ref=</code> tag so you can see where visitors come from in Stats.
-        </p>
-      </div>
+      <BlurFade delay={0.11}>
+        <Card className="rounded-2xl border-border bg-card py-0 shadow-none">
+          <CardContent className="space-y-4 p-6">
+            <div>
+              <h2 className="font-display text-sm font-bold text-foreground">
+                Tagged platform links
+              </h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Includes <code className="text-primary">?ref=platform</code> for source attribution.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {SHARE_PLATFORMS.map((p) =>
+                p.copyOnly ? (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => copy(shareUrl(p.ref), p.id)}
+                    className="flex min-h-[64px] items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3 text-left transition-colors hover:border-primary/40 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white/[0.04] text-foreground">
+                        <PlatformIcon platform={p.id} size={16} />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{p.label}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {copiedId === p.id ? 'Copied tagged link' : 'Copy tagged link'}
+                        </p>
+                      </div>
+                    </div>
+                    {copiedId === p.id ? (
+                      <Check size={15} className="text-emerald-400" aria-hidden="true" />
+                    ) : (
+                      <Copy size={15} className="text-muted-foreground" aria-hidden="true" />
+                    )}
+                  </button>
+                ) : (
+                  <a
+                    key={p.id}
+                    href={whatsappHref(p.ref)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex min-h-[64px] items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3 text-left transition-colors hover:border-primary/40"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white/[0.04] text-foreground">
+                        <PlatformIcon platform={p.id} size={16} />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{p.label}</p>
+                        <p className="text-xs text-muted-foreground">Share in app</p>
+                      </div>
+                    </div>
+                    <ExternalLink size={15} className="text-muted-foreground" aria-hidden="true" />
+                  </a>
+                )
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </BlurFade>
     </div>
   )
 }

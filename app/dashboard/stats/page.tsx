@@ -1,10 +1,16 @@
 'use client'
 // app/dashboard/stats/page.tsx
+import { BlurFade } from '@/components/ui/blur-fade'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState, useTransition } from 'react'
+import { Check, Eye, Flame, Loader2, Sparkles } from 'lucide-react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 
 export default function StatsPage() {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const [streak, setStreak] = useState(0)
   const [score, setScore] = useState(0)
   const [showStreak, setShowStreak] = useState(false)
@@ -16,7 +22,9 @@ export default function StatsPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) return
       const { data } = await supabase
         .from('profiles')
@@ -37,84 +45,134 @@ export default function StatsPage() {
       setViewCount(count ?? 0)
     }
     load()
-  }, [])
+  }, [supabase])
 
   function handleSave() {
     startTransition(async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) return
-      await supabase.from('profiles').update({
-        streak_count: streak,
-        snap_score: score,
-        show_streak: showStreak,
-        show_score: showScore,
-        show_views: showViews,
-      }).eq('id', user.id)
+      await supabase
+        .from('profiles')
+        .update({
+          streak_count: streak,
+          snap_score: score,
+          show_streak: showStreak,
+          show_score: showScore,
+          show_views: showViews,
+        })
+        .eq('id', user.id)
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     })
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-2xl mx-auto space-y-8">
-      <h1 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">Stats</h1>
+    <div className="mx-auto max-w-2xl space-y-6 p-6 md:p-10">
+      <BlurFade delay={0.03}>
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          Stats
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Control which numbers appear on your public card.
+        </p>
+      </BlurFade>
 
       {viewCount !== null && (
-        <div className="glass rounded-2xl p-5 flex items-center gap-4">
-          <span className="text-3xl">👁️</span>
-          <div>
-            <p className="text-2xl font-bold font-display text-[var(--color-text-primary)]">
-              {viewCount.toLocaleString()}
-            </p>
-            <p className="text-sm text-[var(--color-text-secondary)]">Total card views</p>
-          </div>
-        </div>
+        <BlurFade delay={0.07}>
+          <Card className="rounded-2xl border-border bg-card py-0 shadow-none">
+            <CardContent className="flex items-center gap-4 p-5">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-white/[0.04] text-primary">
+                <Eye size={20} aria-hidden="true" />
+              </span>
+              <div>
+                <p className="font-display text-2xl font-extrabold text-foreground">
+                  {viewCount.toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground">Total card views</p>
+              </div>
+            </CardContent>
+          </Card>
+        </BlurFade>
       )}
 
-      <div className="glass rounded-2xl p-5 space-y-5">
-        <h2 className="text-sm font-semibold text-[var(--color-text-secondary)]">Your Snap stats</h2>
-        <p className="text-xs text-[var(--color-text-secondary)]">Enter your stats manually from your Snapchat profile.</p>
+      <BlurFade delay={0.11}>
+        <Card className="rounded-2xl border-border bg-card py-0 shadow-none">
+          <CardContent className="space-y-6 p-6">
+            <div>
+              <h2 className="font-display text-sm font-bold text-foreground">Snap stats</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Self-entered from your Snapchat profile. Hide any stat you do not want public.
+              </p>
+            </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs text-[var(--color-text-secondary)]">🔥 Streak</label>
-            <input
-              type="number" min={0} value={streak} onChange={e => setStreak(Number(e.target.value))}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]/50"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs text-[var(--color-text-secondary)]">⭐ Snap Score</label>
-            <input
-              type="number" min={0} value={score} onChange={e => setScore(Number(e.target.value))}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]/50"
-            />
-          </div>
-        </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <Flame size={13} className="text-primary" aria-hidden="true" />
+                  Streak count
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={streak}
+                  onChange={(e) => setStreak(Number(e.target.value))}
+                  className="min-h-[44px] rounded-xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <Sparkles size={13} className="text-primary" aria-hidden="true" />
+                  Snap Score
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={score}
+                  onChange={(e) => setScore(Number(e.target.value))}
+                  className="min-h-[44px] rounded-xl"
+                />
+              </div>
+            </div>
 
-        <div className="space-y-3">
-          {[
-            { label: 'Show streak on card', val: showStreak, set: setShowStreak },
-            { label: 'Show Snap score on card', val: showScore, set: setShowScore },
-            { label: 'Show view count on card', val: showViews, set: setShowViews },
-          ].map(({ label, val, set }) => (
-            <label key={label} className="flex items-center justify-between cursor-pointer">
-              <span className="text-sm text-[var(--color-text-primary)]">{label}</span>
-              <button
-                role="switch" aria-checked={val} onClick={() => set(!val)}
-                className={`relative w-10 h-6 rounded-full transition-colors ${val ? 'bg-[var(--color-accent)]' : 'bg-white/10'}`}
-              >
-                <span className={`absolute top-1 w-4 h-4 bg-black rounded-full transition-transform ${val ? 'translate-x-5' : 'translate-x-1'}`} />
-              </button>
-            </label>
-          ))}
-        </div>
+            <div className="space-y-4 border-t border-border pt-5">
+              {[
+                { label: 'Show streak on card', val: showStreak, set: setShowStreak },
+                { label: 'Show Snap Score on card', val: showScore, set: setShowScore },
+                { label: 'Show view count on card', val: showViews, set: setShowViews },
+              ].map(({ label, val, set }) => (
+                <div key={label} className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-foreground">{label}</span>
+                  <Switch checked={val} onCheckedChange={set} aria-label={label} />
+                </div>
+              ))}
+            </div>
 
-        <button onClick={handleSave} disabled={isPending}
-          className="btn-primary w-full py-3 rounded-xl text-sm font-semibold disabled:opacity-50">
-          {saved ? '✓ Saved!' : isPending ? 'Saving…' : 'Save stats'}
-        </button>
-      </div>
+            <Button
+              type="button"
+              size="lg"
+              onClick={handleSave}
+              disabled={isPending}
+              className="min-h-[48px] w-full rounded-xl font-semibold"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" aria-hidden="true" />
+                  Saving…
+                </>
+              ) : saved ? (
+                <>
+                  <Check size={15} aria-hidden="true" />
+                  Saved
+                </>
+              ) : (
+                'Save stats'
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </BlurFade>
     </div>
   )
 }

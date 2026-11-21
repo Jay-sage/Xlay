@@ -1,6 +1,8 @@
 // app/[username]/page.tsx - Public card
-import type { Metadata } from 'next'
+import { Card, CardContent } from '@/components/ui/card'
 import { createServerClient } from '@/lib/supabase/server'
+import { Lock } from 'lucide-react'
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import PublicCard from './PublicCard'
 
@@ -87,16 +89,22 @@ export default async function ProfilePage({ params, searchParams }: Props) {
 
   if (profile.is_private) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="glass max-w-sm w-full text-center p-8 rounded-2xl space-y-4">
-          <div className="text-4xl">🔒</div>
-          <h1 className="font-display text-xl font-bold text-[var(--color-text-primary)]">
-            This card is private
-          </h1>
-          <p className="text-sm text-[var(--color-text-secondary)]">
-            {profile.display_name} has set their card to private.
-          </p>
-        </div>
+      <main className="flex min-h-screen items-center justify-center bg-background p-6">
+        <Card className="w-full max-w-sm rounded-2xl border-border bg-card py-0 text-center shadow-none">
+          <CardContent className="space-y-4 p-8">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-white/[0.04] text-primary">
+              <Lock size={20} aria-hidden="true" />
+            </div>
+            <div className="space-y-1.5">
+              <h1 className="font-display text-xl font-extrabold text-foreground">
+                This card is private
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {profile.display_name} has set their card to private.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     )
   }

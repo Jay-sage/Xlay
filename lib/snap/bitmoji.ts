@@ -9,6 +9,12 @@ export interface BitmojiPose {
 
 export const BITMOJI_POSES: BitmojiPose[] = [
   {
+    id: '30415970',
+    label: 'Arms Crossed',
+    description: 'Clean full-body standing with arms crossed',
+    isFullBody: true,
+  },
+  {
     id: '582513516',
     label: 'Calm Stand',
     description: 'Clean full-body 3D standing pose',
@@ -33,12 +39,6 @@ export const BITMOJI_POSES: BitmojiPose[] = [
     isFullBody: true,
   },
   {
-    id: '10222123',
-    label: 'Chilling',
-    description: 'Relaxed full-body 3D pose',
-    isFullBody: true,
-  },
-  {
     id: 'headshot',
     label: 'Classic Circle',
     description: 'Standard Snapchat portrait',
@@ -46,7 +46,7 @@ export const BITMOJI_POSES: BitmojiPose[] = [
   },
 ]
 
-export const DEFAULT_BITMOJI_POSE = '582513516'
+export const DEFAULT_BITMOJI_POSE = '30415970'
 
 /**
  * Extracts the opaque Bitmoji avatar ID from a Snap Login Kit URL.

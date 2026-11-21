@@ -328,7 +328,7 @@ export default function Home() {
 
       {/* Structured Multi-Column Footer */}
       <footer className="mt-auto border-t border-white/[0.06] px-6 py-12">
-        <div className="mx-auto grid w-full max-w-5xl gap-10 md:grid-cols-[1.35fr_repeat(4,1fr)]">
+        <div className="mx-auto grid w-full max-w-5xl gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
           {/* Brand + System Status */}
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
@@ -380,33 +380,6 @@ export default function Home() {
                 <a href="#features" className="transition-colors hover:text-white">
                   Features
                 </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Product */}
-          <div className="space-y-3">
-            <p className="font-display text-xs font-bold text-white">Product</p>
-            <ul className="space-y-2 text-xs text-white/55">
-              <li>
-                <Link href="/dashboard" className="transition-colors hover:text-white">
-                  Card Preview
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard/themes" className="transition-colors hover:text-white">
-                  Theme Editor
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard/music" className="transition-colors hover:text-white">
-                  Soundtrack
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard/friends" className="transition-colors hover:text-white">
-                  Best Friends
-                </Link>
               </li>
             </ul>
           </div>

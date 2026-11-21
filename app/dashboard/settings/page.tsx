@@ -98,9 +98,8 @@ export default function SettingsPage() {
     if (!userId) return
     setDeleting(true)
     try {
-      await supabase.storage.from('music').remove([`${userId}/track.mp3`, `${userId}/track.m4a`])
-      await supabase.storage.from('avatars').remove([`${userId}/avatar`])
-      await supabase.from('profiles').delete().eq('id', userId)
+      const res = await fetch('/api/account/delete', { method: 'POST' })
+      if (!res.ok) throw new Error('Delete failed')
       await supabase.auth.signOut()
       router.push('/?deleted=1')
     } catch {
